@@ -1,9 +1,15 @@
 package CodeMonkeys;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import battlecode.common.*;
 
 
 public strictfp class RobotPlayer {
-    static RobotController rc;
+
+	static RobotController rc;
 
     static Direction[] directions = {
         Direction.NORTH,
@@ -17,12 +23,14 @@ public strictfp class RobotPlayer {
     };
     static RobotType[] spawnedByMiner = {RobotType.REFINERY, RobotType.VAPORATOR, RobotType.DESIGN_SCHOOL,
             RobotType.FULFILLMENT_CENTER, RobotType.NET_GUN};
-
-    static int MINER_LIMIT = 10;
-    static int VAPORATOR_LIMIT = 7;
-    static int DESIGN_LIMIT = 1;  
-    static int LANDSCAPER_LIMIT = 8;
-    static int TURN_LIMIT = 400;
+ 
+    static int ELEVATION_LIMIT = 25;
+    static int MINER_LIMIT = 20;
+    static int VAPORATOR_LIMIT = 2;
+    static int DESIGN_LIMIT = 2;  
+    static int LANDSCAPER_LIMIT = 10;
+    static int TURN_LIMIT = 1000;
+    static int MINER_SPAWN_RATE = 2;
     
     static int turnCount;
     static int minerCount;
@@ -33,6 +41,13 @@ public strictfp class RobotPlayer {
     static MapLocation hqLoc;
     static int hqElevation;
     static MapLocation lastSoupMined;
+    static MapLocation depositLoc;
+    
+    static List<Direction> dirs = Arrays.asList(directions);
+    {
+   ;
+    }
+    static List<MapLocation> hqNeighbors = new ArrayList<>();
     
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
@@ -40,7 +55,7 @@ public strictfp class RobotPlayer {
      **/
     @SuppressWarnings("unused")
     public static void run(RobotController rc) throws GameActionException {
-
+    	
         // This is the RobotController object. You use it to perform actions from this robot,
         // and to get information on its current status.
         RobotPlayer.rc = rc;
@@ -48,9 +63,11 @@ public strictfp class RobotPlayer {
         turnCount = 0;
        
 
-//        System.out.println("I'm a " + rc.getType() + " and I just got created!");
+//       System.out.println("I'm a " + rc.getType() + " and I just got created!");
+//       System.out.println("and my turn count is " + turnCount);
         while (true) {
             turnCount += 1;
+//            System.out.println("I'm a " + rc.getType() + " and my turn count is " + turnCount);
             // Try/catch blocks stop unhandled exceptions, which cause your robot to explode
             try {
                 // Here, we've separated the controls into a different method for each RobotType.
@@ -80,7 +97,7 @@ public strictfp class RobotPlayer {
 
     static void runHQ() throws GameActionException {
     	hqElevation = rc.senseElevation(rc.getLocation());
-    	if(minerCount < MINER_LIMIT || turnCount > TURN_LIMIT) {
+    	if(minerCount < MINER_LIMIT || turnCount > TURN_LIMIT && turnCount % MINER_SPAWN_RATE == 0) {
         for (Direction dir : directions)
             if(tryBuild(RobotType.MINER, dir)) {
             	minerCount += 1;
@@ -114,11 +131,20 @@ public strictfp class RobotPlayer {
 //    	}
     	
     	if(turnCount < 500) {
-	    	if(rc.getTeamSoup() >= RobotType.VAPORATOR.cost && rc.canSenseLocation(hqLoc) && vaporatorCount < VAPORATOR_LIMIT) {
+	    	if(rc.getTeamSoup() >= RobotType.VAPORATOR.cost && !rc.canSenseLocation(hqLoc) && vaporatorCount < VAPORATOR_LIMIT) {
 	    		for(Direction dir: directions) {
 	    			if(rc.senseElevation(rc.getLocation()) > hqElevation && rc.canBuildRobot(RobotType.VAPORATOR, dir)) {
 	    				rc.buildRobot(RobotType.VAPORATOR, dir);
 	    				vaporatorCount += 1;
+	    			}
+	    		}
+	    	}
+	    	
+	    	if(rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && !rc.canSenseLocation(hqLoc) && designCount < DESIGN_LIMIT) {
+	    		for(Direction dir: directions) {
+	    			if(rc.canBuildRobot(RobotType.VAPORATOR, dir)) {
+	    				rc.buildRobot(RobotType.DESIGN_SCHOOL, dir);
+	    				designCount += 1;
 	    			}
 	    		}
 	    	}
@@ -151,6 +177,7 @@ public strictfp class RobotPlayer {
 	        		lastSoupMined = null;
 	        	}
 	        }
+	       
 	        tryMove(randomDirection());
     	}
     	else if (rc.senseElevation(rc.getLocation()) < hqElevation) {
@@ -184,9 +211,67 @@ public strictfp class RobotPlayer {
     }
 
     static void runLandscaper() throws GameActionException {
-    	if(rc.canSenseLocation(hqLoc)) {
-    		Direction dirToHQ = rc.getLocation().directionTo(hqLoc);
-    		tryMove(dirToHQ);
+    	if(hqLoc == null) {
+    		// search surroundings for HQ
+    		System.out.println("searching for hq....");
+    		RobotInfo[] robots = rc.senseNearbyRobots();
+    		for(RobotInfo robot : robots) {
+    			if(robot.type == RobotType.HQ && robot.team == rc.getTeam()) {
+    				hqLoc = robot.location;
+    	    		for(Direction dir: directions) {
+    	    			hqNeighbors.add(hqLoc.add(dir));
+    	    		}
+    	    		depositLoc = hqNeighbors.remove(0);
+    				System.out.println("my depositLoc is: " + depositLoc);
+    			}
+    		}
+    	}
+    	System.out.println("Im a landscaper and have dirt: " + rc.getDirtCarrying());
+    	if(depositLoc != null) {
+	    	if(depositLoc.equals(rc.getLocation()) && rc.canDepositDirt(Direction.CENTER)) {
+	    		System.out.println("Depositing dirt at loc: " + rc.getLocation());
+	    		rc.depositDirt(Direction.CENTER);
+	    	}
+	    	
+	    	if(rc.canSenseLocation(depositLoc) && rc.senseElevation(depositLoc) >= ELEVATION_LIMIT) {
+	    		if(!hqNeighbors.isEmpty()) {
+	    			depositLoc = hqNeighbors.remove(0);
+	    		}
+	    	}
+	    		
+	    	
+	    	if(rc.getDirtCarrying() == RobotType.LANDSCAPER.dirtLimit) {
+	    		
+	    		Direction dirToDeposit = rc.getLocation().directionTo(depositLoc);
+	        	if(tryMove(dirToDeposit)) {
+	        		System.out.println("moved towards depositLoc");
+	        	}
+	    	}
+	    	
+	    	else{
+		    	for (Direction dir: directions) {
+			    	if(!rc.canSenseLocation(hqLoc) && rc.canDigDirt(dir)) {
+			    		System.out.println("digging in this direction: " + rc.getLocation().add(dir));
+			    		rc.digDirt(dir);
+			    	}
+		    	}
+	    	}
+	    	Collections.shuffle(dirs);
+	    	for(Direction dir: dirs) {
+	    		tryMove(dir);
+	    	}
+    	}
+    	if(rc.getDirtCarrying() < RobotType.LANDSCAPER.dirtLimit) {
+	    	for (Direction dir: directions) {
+		    	if(rc.canDigDirt(dir)) {
+		    		System.out.println("digging in this direction: " + rc.getLocation().add(dir));
+		    		rc.digDirt(dir);
+		    	}
+	    	}
+    	}
+    	Collections.shuffle(dirs);
+    	for(Direction dir: dirs) {
+    		tryMove(dir);
     	}
     }
 
