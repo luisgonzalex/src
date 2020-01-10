@@ -19,6 +19,7 @@ public strictfp class RobotPlayer {
 
     static int turnCount;
     static MapLocation hqLoc;
+    static MapLocation lastSoupMined;
 
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
@@ -79,16 +80,21 @@ public strictfp class RobotPlayer {
     			}
     		}
     	}
-        tryBlockchain();
+//        tryBlockchain();
         // tryBuild(randomSpawnedByMiner(), randomDirection());
 //        for (Direction dir : directions)
 //            tryBuild(RobotType.FULFILLMENT_CENTER, dir);
-        for (Direction dir : directions)
-            if (tryRefine(dir))
+        for (Direction dir : directions) {
+            if (tryRefine(dir)) {
                 System.out.println("I refined soup! " + rc.getTeamSoup());
-        for (Direction dir : directions)
-            if (tryMine(dir))
+            }
+        }
+        for (Direction dir : directions) {
+            if (tryMine(dir)) {
+            	lastSoupMined = rc.getLocation().add(dir);
                 System.out.println("I mined soup! " + rc.getSoupCarrying());
+            }
+        }
         if (rc.getSoupCarrying() == rc.getType().soupLimit) {
         	System.out.println("at the soup limit: " + rc.getSoupCarrying());
         	// time to go back to HQ
@@ -97,9 +103,20 @@ public strictfp class RobotPlayer {
         		System.out.println("moved towards HQ");
         	}
         }
-        if (tryMove(randomDirection()))
+        if (lastSoupMined != null) {
+        	Direction dirToSoup = rc.getLocation().directionTo(lastSoupMined);
+        	if (tryMove(dirToSoup)) {
+        		System.out.println("moved towards last soup");
+        	}
+        	if (rc.getLocation() == lastSoupMined) {
+        		lastSoupMined = null;
+        	}
+        }
+        	
+        if (tryMove(randomDirection())) {
         	// otherwise move randomly as usual
             System.out.println("I moved!");
+        }
     }
 
     static void runRefinery() throws GameActionException {
