@@ -1,5 +1,6 @@
-package teamrobot;
+package CodeMonkeys;
 import battlecode.common.*;
+
 
 public strictfp class RobotPlayer {
     static RobotController rc;
@@ -17,10 +18,22 @@ public strictfp class RobotPlayer {
     static RobotType[] spawnedByMiner = {RobotType.REFINERY, RobotType.VAPORATOR, RobotType.DESIGN_SCHOOL,
             RobotType.FULFILLMENT_CENTER, RobotType.NET_GUN};
 
+    static int MINER_LIMIT = 10;
+    static int VAPORATOR_LIMIT = 7;
+    static int DESIGN_LIMIT = 1;  
+    static int LANDSCAPER_LIMIT = 8;
+    static int TURN_LIMIT = 400;
+    
     static int turnCount;
+    static int minerCount;
+    static int vaporatorCount;
+    static int designCount;
+    static int landscaperCount;
+    
     static MapLocation hqLoc;
+    static int hqElevation;
     static MapLocation lastSoupMined;
-
+    
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
      * If this method returns, the robot dies!
@@ -35,14 +48,14 @@ public strictfp class RobotPlayer {
         turnCount = 0;
        
 
-        System.out.println("I'm a " + rc.getType() + " and I just got created!");
+//        System.out.println("I'm a " + rc.getType() + " and I just got created!");
         while (true) {
             turnCount += 1;
             // Try/catch blocks stop unhandled exceptions, which cause your robot to explode
             try {
                 // Here, we've separated the controls into a different method for each RobotType.
                 // You can add the missing ones or rewrite this into your own control structure.
-                System.out.println("I'm a " + rc.getType() + "! Location " + rc.getLocation());
+//                System.out.println("I'm a " + rc.getType() + "! Location " + rc.getLocation());
                 switch (rc.getType()) {
                     case HQ:                 runHQ();                break;
                     case MINER:              runMiner();             break;
@@ -59,15 +72,21 @@ public strictfp class RobotPlayer {
                 Clock.yield();
 
             } catch (Exception e) {
-                System.out.println(rc.getType() + " Exception");
+//                System.out.println(rc.getType() + " Exception");
                 e.printStackTrace();
             }
         }
     }
 
     static void runHQ() throws GameActionException {
+    	hqElevation = rc.senseElevation(rc.getLocation());
+    	if(minerCount < MINER_LIMIT || turnCount > TURN_LIMIT) {
         for (Direction dir : directions)
-            tryBuild(RobotType.MINER, dir);
+            if(tryBuild(RobotType.MINER, dir)) {
+            	minerCount += 1;
+            }
+    	}
+
     }
 
     static void runMiner() throws GameActionException {
@@ -84,38 +103,60 @@ public strictfp class RobotPlayer {
         // tryBuild(randomSpawnedByMiner(), randomDirection());
 //        for (Direction dir : directions)
 //            tryBuild(RobotType.FULFILLMENT_CENTER, dir);
-        for (Direction dir : directions) {
-            if (tryRefine(dir)) {
-                System.out.println("I refined soup! " + rc.getTeamSoup());
-            }
-        }
-        for (Direction dir : directions) {
-            if (tryMine(dir)) {
-            	lastSoupMined = rc.getLocation().add(dir);
-                System.out.println("I mined soup! " + rc.getSoupCarrying());
-            }
-        }
-        if (rc.getSoupCarrying() == rc.getType().soupLimit) {
-        	System.out.println("at the soup limit: " + rc.getSoupCarrying());
-        	// time to go back to HQ
-        	Direction dirToHQ = rc.getLocation().directionTo(hqLoc);
-        	if(tryMove(dirToHQ)) {
-        		System.out.println("moved towards HQ");
-        	}
-        }
-        if (lastSoupMined != null) {
-        	Direction dirToSoup = rc.getLocation().directionTo(lastSoupMined);
-        	if (tryMove(dirToSoup)) {
-        		System.out.println("moved towards last soup");
-        	}
-        	if (rc.getLocation() == lastSoupMined) {
-        		lastSoupMined = null;
-        	}
-        }
-        	
-        if (tryMove(randomDirection())) {
+    	
+//    	if(vaporatorCount >= VAPORATOR_LIMIT && designCount < DESIGN_LIMIT) {
+//    		for(Direction dir: directions) {
+//    			if(rc.canBuildRobot(RobotType.DESIGN_SCHOOL, dir) && rc.canSenseLocation(hqLoc) && designCount < DESIGN_LIMIT) {
+//    				rc.buildRobot(RobotType.DESIGN_SCHOOL, dir);
+//    				designCount += 1;
+//    			}
+//    		}
+//    	}
+    	
+    	if(turnCount < 500) {
+	    	if(rc.getTeamSoup() >= RobotType.VAPORATOR.cost && rc.canSenseLocation(hqLoc) && vaporatorCount < VAPORATOR_LIMIT) {
+	    		for(Direction dir: directions) {
+	    			if(rc.senseElevation(rc.getLocation()) > hqElevation && rc.canBuildRobot(RobotType.VAPORATOR, dir)) {
+	    				rc.buildRobot(RobotType.VAPORATOR, dir);
+	    				vaporatorCount += 1;
+	    			}
+	    		}
+	    	}
+	    	
+	        for (Direction dir : directions) {
+	            if (tryRefine(dir)) {
+	//                System.out.println("I refined soup! " + rc.getTeamSoup());
+	            }
+	        }
+	        for (Direction dir : directions) {
+	            if (tryMine(dir)) {
+	            	lastSoupMined = rc.getLocation().add(dir);
+	//                System.out.println("I mined soup! " + rc.getSoupCarrying());
+	            }
+	        }
+	        if (rc.getSoupCarrying() == rc.getType().soupLimit) {
+	//        	System.out.println("at the soup limit: " + rc.getSoupCarrying());
+	        	// time to go back to HQ
+	        	Direction dirToHQ = rc.getLocation().directionTo(hqLoc);
+	        	if(tryMove(dirToHQ)) {
+	//        		System.out.println("moved towards HQ");
+	        	}
+	        }
+	        if (lastSoupMined != null) {
+	        	Direction dirToSoup = rc.getLocation().directionTo(lastSoupMined);
+	        	if (tryMove(dirToSoup)) {
+	//        		System.out.println("moved towards last soup");
+	        	}
+	        	if (rc.getLocation() == lastSoupMined) {
+	        		lastSoupMined = null;
+	        	}
+	        }
+	        tryMove(randomDirection());
+    	}
+    	else if (rc.senseElevation(rc.getLocation()) < hqElevation) {
         	// otherwise move randomly as usual
-            System.out.println("I moved!");
+//            System.out.println("I moved!");
+        	tryMove(randomDirection());
         }
     }
 
@@ -128,7 +169,13 @@ public strictfp class RobotPlayer {
     }
 
     static void runDesignSchool() throws GameActionException {
-
+    	if(landscaperCount < LANDSCAPER_LIMIT) {
+    		for(Direction direction: directions) {
+    			if(tryBuild(RobotType.LANDSCAPER, direction)) {
+    				landscaperCount += 1;
+    			}
+    		}
+    	}
     }
 
     static void runFulfillmentCenter() throws GameActionException {
@@ -137,7 +184,10 @@ public strictfp class RobotPlayer {
     }
 
     static void runLandscaper() throws GameActionException {
-
+    	if(rc.canSenseLocation(hqLoc)) {
+    		Direction dirToHQ = rc.getLocation().directionTo(hqLoc);
+    		tryMove(dirToHQ);
+    	}
     }
 
     static void runDeliveryDrone() throws GameActionException {
@@ -149,7 +199,7 @@ public strictfp class RobotPlayer {
             if (robots.length > 0) {
                 // Pick up a first robot within range
                 rc.pickUpUnit(robots[0].getID());
-                System.out.println("I picked up " + robots[0].getID() + "!");
+//                System.out.println("I picked up " + robots[0].getID() + "!");
             }
         } else {
             // No close robots, so search for robots within sight radius
