@@ -2,7 +2,9 @@ package CodeMonkeys;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import battlecode.common.*;
 
@@ -42,11 +44,23 @@ public strictfp class RobotPlayer {
     static int hqElevation;
     static MapLocation lastSoupMined;
     static MapLocation depositLoc;
-    
-    static List<Direction> dirs = Arrays.asList(directions);
+    static int teamSecret = 72151689;
+    static HashMap<Direction, Direction> oppositeDirection = new HashMap<>();
     {
-   ;
+    	oppositeDirection.put(Direction.NORTH, Direction.SOUTH);
+    	oppositeDirection.put(Direction.NORTHEAST, Direction.SOUTHWEST);
+    	oppositeDirection.put(Direction.EAST, Direction.WEST);
+    	oppositeDirection.put(Direction.SOUTHEAST, Direction.NORTHWEST);
+    	oppositeDirection.put(Direction.SOUTH, Direction.NORTH);
+    	oppositeDirection.put(Direction.SOUTHWEST, Direction.NORTHEAST);
+    	oppositeDirection.put(Direction.WEST, Direction.EAST);
+    	oppositeDirection.put(Direction.NORTHWEST, Direction.SOUTHEAST);
+    	
     }
+    static List<Direction> dirs = Arrays.asList(directions);
+//    {
+//   ;
+//    }
     static List<MapLocation> hqNeighbors = new ArrayList<>();
     
     /**
@@ -59,14 +73,12 @@ public strictfp class RobotPlayer {
         // This is the RobotController object. You use it to perform actions from this robot,
         // and to get information on its current status.
         RobotPlayer.rc = rc;
-
         turnCount = 0;
-       
 
 //       System.out.println("I'm a " + rc.getType() + " and I just got created!");
 //       System.out.println("and my turn count is " + turnCount);
         while (true) {
-            turnCount += 1;
+        	turnCount += 1;
 //            System.out.println("I'm a " + rc.getType() + " and my turn count is " + turnCount);
             // Try/catch blocks stop unhandled exceptions, which cause your robot to explode
             try {
@@ -97,13 +109,21 @@ public strictfp class RobotPlayer {
 
     static void runHQ() throws GameActionException {
     	hqElevation = rc.senseElevation(rc.getLocation());
-    	if(minerCount < MINER_LIMIT || turnCount > TURN_LIMIT && turnCount % MINER_SPAWN_RATE == 0) {
+    	if(minerCount < MINER_LIMIT || rc.getRoundNum() > TURN_LIMIT && rc.getRoundNum() % MINER_SPAWN_RATE == 0) {
         for (Direction dir : directions)
             if(tryBuild(RobotType.MINER, dir)) {
             	minerCount += 1;
             }
     	}
-
+    	if (rc.getRoundNum() == 1) {
+	    	int[] message = new int[7];
+	    	message[0] = teamSecret;
+	    	message[6] = rc.getLocation().x;
+	    	message[4] = rc.getLocation().y;
+        	if (rc.canSubmitTransaction(message, 10)) {
+        		rc.submitTransaction(message, 10);
+        	}
+    	}
     }
 
     static void runMiner() throws GameActionException {
@@ -113,10 +133,11 @@ public strictfp class RobotPlayer {
     		for(RobotInfo robot : robots) {
     			if(robot.type == RobotType.HQ && robot.team == rc.getTeam()) {
     				hqLoc = robot.location;
+    				hqElevation = rc.senseElevation(hqLoc);
     			}
     		}
     	}
-//        tryBlockchain();
+//      tryBlockchain(rc.getRoundNum());
         // tryBuild(randomSpawnedByMiner(), randomDirection());
 //        for (Direction dir : directions)
 //            tryBuild(RobotType.FULFILLMENT_CENTER, dir);
@@ -130,7 +151,7 @@ public strictfp class RobotPlayer {
 //    		}
 //    	}
     	
-    	if(turnCount < 500) {
+    	if(rc.getRoundNum() < 500) {
 	    	if(rc.getTeamSoup() >= RobotType.VAPORATOR.cost && !rc.canSenseLocation(hqLoc) && vaporatorCount < VAPORATOR_LIMIT) {
 	    		for(Direction dir: directions) {
 	    			if(rc.senseElevation(rc.getLocation()) > hqElevation && rc.canBuildRobot(RobotType.VAPORATOR, dir)) {
@@ -140,9 +161,9 @@ public strictfp class RobotPlayer {
 	    		}
 	    	}
 	    	
-	    	if(rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && !rc.canSenseLocation(hqLoc) && designCount < DESIGN_LIMIT) {
+	    	if(rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && !rc.canSenseLocation(hqLoc) && designCount < DESIGN_LIMIT && rc.getRoundNum() > 400) {
 	    		for(Direction dir: directions) {
-	    			if(rc.canBuildRobot(RobotType.VAPORATOR, dir)) {
+	    			if(rc.senseElevation(rc.getLocation()) > hqElevation && rc.canBuildRobot(RobotType.DESIGN_SCHOOL, dir)) {
 	    				rc.buildRobot(RobotType.DESIGN_SCHOOL, dir);
 	    				designCount += 1;
 	    			}
@@ -166,21 +187,23 @@ public strictfp class RobotPlayer {
 	        	Direction dirToHQ = rc.getLocation().directionTo(hqLoc);
 	        	if(tryMove(dirToHQ)) {
 	//        		System.out.println("moved towards HQ");
+	        		System.out.println("moved to: " + rc.getLocation());
 	        	}
 	        }
-	        if (lastSoupMined != null) {
+	        if (lastSoupMined != null && rc.getSoupCarrying() == 0) {
 	        	Direction dirToSoup = rc.getLocation().directionTo(lastSoupMined);
 	        	if (tryMove(dirToSoup)) {
-	//        		System.out.println("moved towards last soup");
+	        		System.out.println("moved towards last soup");
 	        	}
 	        	if (rc.getLocation() == lastSoupMined) {
 	        		lastSoupMined = null;
 	        	}
 	        }
-	       
-	        tryMove(randomDirection());
+	        if (tryMove(randomDirection())) {
+	        	System.out.println("moved: " + rc.getLocation());
+	        }
     	}
-    	else if (rc.senseElevation(rc.getLocation()) < hqElevation) {
+    	else if (rc.senseElevation(rc.getLocation()) <= hqElevation) {
         	// otherwise move randomly as usual
 //            System.out.println("I moved!");
         	tryMove(randomDirection());
@@ -211,68 +234,115 @@ public strictfp class RobotPlayer {
     }
 
     static void runLandscaper() throws GameActionException {
-    	if(hqLoc == null) {
-    		// search surroundings for HQ
-    		System.out.println("searching for hq....");
-    		RobotInfo[] robots = rc.senseNearbyRobots();
-    		for(RobotInfo robot : robots) {
-    			if(robot.type == RobotType.HQ && robot.team == rc.getTeam()) {
-    				hqLoc = robot.location;
-    	    		for(Direction dir: directions) {
-    	    			hqNeighbors.add(hqLoc.add(dir));
-    	    		}
-    	    		depositLoc = hqNeighbors.remove(0);
-    				System.out.println("my depositLoc is: " + depositLoc);
+    	if (turnCount == 0) {
+    		for (Transaction tx : rc.getBlock(1)) {
+    			int[] mess = tx.getMessage();
+    			if (mess[0] == teamSecret) {
+    				hqLoc = new MapLocation(mess[6], mess[4]);
     			}
     		}
     	}
+    	
+//    	if(hqLoc == null) {
+//   		// search surroundings for HQ
+//    		System.out.println("searching for hq....");
+//   		RobotInfo[] robots = rc.senseNearbyRobots();
+//    		for(RobotInfo robot : robots) {
+//    			if(robot.type == RobotType.HQ && robot.team == rc.getTeam()) {
+//    				hqLoc = robot.location;
+//    	    		for(Direction dir: directions) {
+//    	    			hqNeighbors.add(hqLoc.add(dir));
+//    	    		}
+//    	    		depositLoc = hqNeighbors.remove(0);
+//    				System.out.println("my depositLoc is: " + depositLoc);
+//    			}
+//    		}
+//    	}
     	System.out.println("Im a landscaper and have dirt: " + rc.getDirtCarrying());
-    	if(depositLoc != null) {
-	    	if(depositLoc.equals(rc.getLocation()) && rc.canDepositDirt(Direction.CENTER)) {
-	    		System.out.println("Depositing dirt at loc: " + rc.getLocation());
-	    		rc.depositDirt(Direction.CENTER);
-	    	}
-	    	
-	    	if(rc.canSenseLocation(depositLoc) && rc.senseElevation(depositLoc) >= ELEVATION_LIMIT) {
-	    		if(!hqNeighbors.isEmpty()) {
-	    			depositLoc = hqNeighbors.remove(0);
+// 		checks if it is at HQ    	
+    	Direction hqDir = null;
+    	Direction behind = null;
+    	boolean  atHQ = false;
+    	if (atHQ == false) {
+	    	RobotInfo[] rob = rc.senseNearbyRobots(1);
+	    	for (RobotInfo r : rob) {
+		    	if (r.type == RobotType.HQ && r.team == rc.getTeam()) {
+		    		for (Direction dir : directions) {
+		    			if (rc.senseRobotAtLocation(rc.getLocation().add(dir)).type == RobotType.HQ) {
+		    				hqDir = dir;
+		    			}
+		    		}
+		    		behind = oppositeDirection.get(hqDir);
+		    		atHQ = true;
 	    		}
 	    	}
-	    		
-	    	
-	    	if(rc.getDirtCarrying() == RobotType.LANDSCAPER.dirtLimit) {
-	    		
-	    		Direction dirToDeposit = rc.getLocation().directionTo(depositLoc);
-	        	if(tryMove(dirToDeposit)) {
-	        		System.out.println("moved towards depositLoc");
-	        	}
-	    	}
-	    	
-	    	else{
-		    	for (Direction dir: directions) {
-			    	if(!rc.canSenseLocation(hqLoc) && rc.canDigDirt(dir)) {
-			    		System.out.println("digging in this direction: " + rc.getLocation().add(dir));
-			    		rc.digDirt(dir);
-			    	}
-		    	}
-	    	}
-	    	Collections.shuffle(dirs);
-	    	for(Direction dir: dirs) {
-	    		tryMove(dir);
-	    	}
+	    }
+// 		dig dirt behind    	
+    	if (atHQ == true && rc.getDirtCarrying() < RobotType.LANDSCAPER.dirtLimit) {
+    		if (rc.canDigDirt(behind)) { 
+    			rc.digDirt(behind);
+    		}
     	}
-    	if(rc.getDirtCarrying() < RobotType.LANDSCAPER.dirtLimit) {
-	    	for (Direction dir: directions) {
-		    	if(rc.canDigDirt(dir)) {
-		    		System.out.println("digging in this direction: " + rc.getLocation().add(dir));
-		    		rc.digDirt(dir);
-		    	}
-	    	}
+// 		build wall
+    	if (rc.getDirtCarrying() >= RobotType.LANDSCAPER.dirtLimit) {
+    		rc.depositDirt(Direction.CENTER);
     	}
-    	Collections.shuffle(dirs);
-    	for(Direction dir: dirs) {
-    		tryMove(dir);
+//		walking to HQ
+    	Direction dirToHQ = rc.getLocation().directionTo(hqLoc);
+    	if(tryMove(dirToHQ)) {
+//        		System.out.println("moved towards HQ");
+    		System.out.println("moved to: " + rc.getLocation());
+    	} else {
+    		tryMove(randomDirection());
     	}
+    	
+    	
+//    	if(depositLoc != null) {
+//	    	if(depositLoc.equals(rc.getLocation()) && rc.canDepositDirt(Direction.CENTER)) {
+//	    		System.out.println("Depositing dirt at loc: " + rc.getLocation());
+//	    		rc.depositDirt(Direction.CENTER);
+//	    	}
+//	    	
+//	    	if(rc.canSenseLocation(depositLoc) && rc.senseElevation(depositLoc) >= ELEVATION_LIMIT) {
+//	    		if(!hqNeighbors.isEmpty()) {
+//	    			depositLoc = hqNeighbors.remove(0);
+//	    		}
+//	    	}
+//	    		
+//	    	
+//	    	if(rc.getDirtCarrying() == RobotType.LANDSCAPER.dirtLimit) {
+//	    		
+//	    		Direction dirToDeposit = rc.getLocation().directionTo(depositLoc);
+//	        	if(tryMove(dirToDeposit)) {
+//	        		System.out.println("moved towards depositLoc");
+//	        	}
+//	    	}
+//	    	
+//	    	else{
+//		    	for (Direction dir: directions) {
+//			    	if(!rc.canSenseLocation(hqLoc) && rc.canDigDirt(dir)) {
+//			    		System.out.println("digging in this direction: " + rc.getLocation().add(dir));
+//			    		rc.digDirt(dir);
+//			    	}
+//		    	}
+//	    	}
+//	    	Collections.shuffle(dirs);
+//	    	for(Direction dir: dirs) {
+//	    		tryMove(dir);
+//	    	}
+//    	}
+//    	if(rc.getDirtCarrying() < RobotType.LANDSCAPER.dirtLimit) {
+//	    	for (Direction dir: directions) {
+//		    	if(rc.canDigDirt(dir)) {
+//		    		System.out.println("digging in this direction: " + rc.getLocation().add(dir));
+//		    		rc.digDirt(dir);
+//		    	}
+//	    	}
+//    	}
+//    	Collections.shuffle(dirs);
+//    	for(Direction dir: dirs) {
+//    		tryMove(dir);
+//    	}
     }
 
     static void runDeliveryDrone() throws GameActionException {
@@ -339,7 +409,7 @@ public strictfp class RobotPlayer {
      */
     static boolean tryMove(Direction dir) throws GameActionException {
         // System.out.println("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
-        if (rc.isReady() && rc.canMove(dir)) {
+        if (rc.isReady() && rc.canMove(dir) && !rc.senseFlooding(rc.getLocation().add(dir))) {
             rc.move(dir);
             return true;
         } else return false;
@@ -389,8 +459,8 @@ public strictfp class RobotPlayer {
     }
 
 
-    static void tryBlockchain() throws GameActionException {
-        if (turnCount < 3) {
+    static void tryBlockchain(int round) throws GameActionException {
+        if (round < 3) {
             int[] message = new int[7];
             for (int i = 0; i < 7; i++) {
                 message[i] = 123;
