@@ -46,6 +46,7 @@ public strictfp class RobotPlayer {
     static MapLocation depositLoc;
     static int teamSecret = 72151689;
     static HashMap<Direction, Direction> oppositeDirection = new HashMap<>();
+    static Direction last;
 //    {
 //    	oppositeDirection.put(Direction.NORTH, Direction.SOUTH);
 //    	oppositeDirection.put(Direction.NORTHEAST, Direction.SOUTHWEST);
@@ -131,8 +132,8 @@ public strictfp class RobotPlayer {
 	    	message[0] = teamSecret;
 	    	message[6] = rc.getLocation().x;
 	    	message[4] = rc.getLocation().y;
-        	if (rc.canSubmitTransaction(message, 10)) {
-        		rc.submitTransaction(message, 10);
+        	if (rc.canSubmitTransaction(message, 1)) {
+        		rc.submitTransaction(message, 1);
         	}
     	}
     }
@@ -210,14 +211,14 @@ public strictfp class RobotPlayer {
 	        		lastSoupMined = null;
 	        	}
 	        }
-	        if (tryMove(randomDirection())) {
+	        if (tryMove(randomDirection(last))) {
 	        	System.out.println("moved: " + rc.getLocation());
 	        }
     	}
     	else if (rc.senseElevation(rc.getLocation()) <= hqElevation) {
         	// otherwise move randomly as usual
 //            System.out.println("I moved!");
-        	tryMove(randomDirection());
+        	tryMove(randomDirection(last));
         }
     }
 
@@ -310,7 +311,7 @@ public strictfp class RobotPlayer {
 //        		System.out.println("moved towards HQ");
 //    		System.out.println("moved to: " + rc.getLocation());
     	} else {
-    		tryMove(randomDirection());
+    		tryMove(randomDirection(last));
     	}
     	
     	
@@ -375,7 +376,7 @@ public strictfp class RobotPlayer {
             }
         } else {
             // No close robots, so search for robots within sight radius
-            tryMove(randomDirection());
+            tryMove(randomDirection(last));
         }
     }
 
@@ -388,8 +389,15 @@ public strictfp class RobotPlayer {
      *
      * @return a random Direction
      */
-    static Direction randomDirection() {
-        return directions[(int) (Math.random() * directions.length)];
+    static Direction randomDirection(Direction last) {
+    	Direction random = directions[(int) (Math.random() * directions.length)];
+    	while (true) {
+	    	if (random != oppositeDirection.get(last)) {
+	    		return random;
+	    	} else {
+	    		random = directions[(int) (Math.random() * directions.length)];
+	    	}
+	    }
     }
 
     /**
@@ -428,6 +436,7 @@ public strictfp class RobotPlayer {
         // System.out.println("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
         if (rc.isReady() && rc.canMove(dir) && !rc.senseFlooding(rc.getLocation().add(dir))) {
             rc.move(dir);
+            last = dir;
             return true;
         } else return false;
     }
