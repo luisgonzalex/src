@@ -68,6 +68,7 @@ public strictfp class RobotPlayer {
     static boolean stop = false;
     static boolean hasStopped = false;
     static boolean replaceDirt = true;
+    static boolean done = false;
     
     static MapLocation loc;
     static MapLocation fcLoc;
@@ -344,6 +345,10 @@ public strictfp class RobotPlayer {
     	// code for building miner
 //    	System.out.println(Clock.getBytecodesLeft());
     	if (buildingMiner) {
+    		if (ng3Built) {
+    			buildingMiner = false;
+    			done = true;
+    		}
     		// get locations of buildings from blockchain
     		if (turnCount == 1) {
         		for (Transaction tx : rc.getBlock(1)) {
@@ -381,18 +386,6 @@ public strictfp class RobotPlayer {
 	    			tryMove(rc.getLocation().directionTo(fcLoc));
 	    		}
         	}
-    		// check if design school can be built and build it
-    		if (vap3Built && !dsBuilt) {
-    			adjacent = rc.getLocation().isAdjacentTo(dsLoc);
-		    	if (rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && !dsBuilt && adjacent) {
-		    		if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc))) {
-		    			rc.buildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc));
-		    			dsBuilt = true;
-		   			}
-		    	} else if (!adjacent) {
-		    		tryMove(rc.getLocation().directionTo(dsLoc));
-		    	}
-    		}
     		// check if vaporators can be built
     		if (fcBuilt && !vap1Built && canBuild) {
     			adjacent = rc.getLocation().isAdjacentTo(vap1Loc);
@@ -422,12 +415,32 @@ public strictfp class RobotPlayer {
     				if (rc.canBuildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap3Loc))) {
     					rc.buildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap3Loc));
     					vap3Built = true;
+    					int[] message = new int[7];
+    		        	message[0] = teamSecret;
+    		        	message[1] = 7;
+    		        	if (rc.canSubmitTransaction(message, 1)) {
+    		        		rc.submitTransaction(message, 1);
+    		        	}
     				}
     			} else if (!adjacent) {
     				tryMove(rc.getLocation().directionTo(vap3Loc));
     			}
     		}
+    		// check if design school can be built and build it
+    		if (vap3Built && !dsBuilt) {
+    			adjacent = rc.getLocation().isAdjacentTo(dsLoc);
+		    	if (rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && !dsBuilt && adjacent) {
+		    		if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc))) {
+		    			rc.buildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc));
+		    			dsBuilt = true;
+		   			}
+		    	} else if (!adjacent) {
+		    		tryMove(rc.getLocation().directionTo(dsLoc));
+		    	}
+    		}
+    		System.out.println(dsBuilt);
     		if (dsBuilt && !ng1Built) {
+    			System.out.println("ran");
     			adjacent = rc.getLocation().isAdjacentTo(ng1Loc);
     			if (rc.getTeamSoup() >= RobotType.NET_GUN.cost && !ng1Built && adjacent) {
     				if (rc.canBuildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng1Loc))) {
@@ -441,6 +454,7 @@ public strictfp class RobotPlayer {
     		        	}
     				}
     			} else if (!adjacent) {
+    				System.out.println(rc.getLocation().directionTo(ng1Loc));
     				tryMove(rc.getLocation().directionTo(ng1Loc));
     			}
     		}
@@ -469,15 +483,23 @@ public strictfp class RobotPlayer {
                     	}
     				}
     			} else if (!adjacent) {
-    				tryMove(rc.getLocation().directionTo(ng1Loc));
+    				tryMove(rc.getLocation().directionTo(ng3Loc));
     			}
-    		}
-    		if (ng3Built) {
-    			buildingMiner = false;
     		}
     	}
     	// code for normal miners
     	else {
+    		for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+    			int[] mess = tx.getMessage();
+    			if (mess[0] == teamSecret && mess[1] == 7) {
+    				done = true;
+    			}
+    		}
+    		if (done) {
+    			enemyHQCandidates();
+    			Direction dirToEnemyHQ = rc.getLocation().directionTo(enemyHQLocs[0]);
+    			tryMove(dirToEnemyHQ);
+    		}
 //    		System.out.println(Clock.getBytecodesLeft());
     		loc = rc.getLocation();
 	    	// tries to refine soup all around it
@@ -720,7 +742,7 @@ public strictfp class RobotPlayer {
     				} else if (mess[3] == 4) {
     					behind = Direction.SOUTH;
     				} else if (mess[3] == 5) {
-    					behind = Direction.WEST;
+    					behind = Direction.SOUTHWEST;
     				} else if (mess[3] == 6) {
     					behind = Direction.EAST;
     				}
@@ -760,7 +782,7 @@ public strictfp class RobotPlayer {
     		atLoc = true;
     	}
 // 		build wall
-    	System.out.println(stop);
+//    	System.out.println(stop);
     	if (!replaceDirt && !stop) {
     		for (Direction dir : placeDirt) {
     			if (dir != last && dir != lastLast) {
@@ -862,11 +884,13 @@ public strictfp class RobotPlayer {
             	}
             	
             	for(Direction dir: directions) {
-            		if(rc.senseFlooding(curLoc.add(dir)) && rc.canDropUnit(dir)) {
-                		System.out.println("I am trying to drop the unit");
-                		rc.dropUnit(dir);
-                		waterLoc = curLoc;
-                	}
+            		if(rc.canSenseLocation(curLoc.add(dir))) {
+	            		if(rc.senseFlooding(curLoc.add(dir)) && rc.canDropUnit(dir)) {
+	                		System.out.println("I am trying to drop the unit");
+	                		rc.dropUnit(dir);
+	                		waterLoc = curLoc;
+	                	}
+            		}
             	}
             	
                 // No close robots, so search for robots within sight radius
@@ -1039,21 +1063,23 @@ public strictfp class RobotPlayer {
      */
     static boolean tryMove(Direction dir) throws GameActionException {
         boolean didMove = false;
+        System.out.println(dir);
+        System.out.println(lastDesiredDir);
         // System.out.println("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
         if (rc.isReady() && rc.canMove(dir) && (!rc.senseFlooding(rc.getLocation().add(dir)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
             rc.move(dir);
             last = dir;
             didMove = true;
         } 
-        else if(lastDesiredDir != null) {
+        if (lastDesiredDir != null) {
         	if (rc.isReady() && rc.canMove(lastDesiredDir) && (!rc.senseFlooding(rc.getLocation().add(lastDesiredDir)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
                 rc.move(lastDesiredDir);
                 last = lastDesiredDir;
                 didMove = true;
             }
         }
-        else {
-
+        System.out.println(didMove);
+        if (!didMove){
         	Direction[] altDirs = alternateDirs.get(dir);
         	for(Direction d: altDirs) {
                 if (rc.isReady() && rc.canMove(d) && (!rc.senseFlooding(rc.getLocation().add(d)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
