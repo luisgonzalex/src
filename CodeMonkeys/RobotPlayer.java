@@ -47,6 +47,7 @@ public strictfp class RobotPlayer {
     static MapLocation depositLoc;
     static int teamSecret = 72151689;
     static HashMap<Direction, Direction> oppositeDirection = new HashMap<>();
+    static HashMap<Direction, Direction[]> alternateDirs = new HashMap<>();
     static Direction last;
     static MapLocation fcLoc;
 	static MapLocation vap1Loc;
@@ -56,21 +57,9 @@ public strictfp class RobotPlayer {
 	static boolean buildingMiner = false;
 	static boolean protectorDrone = false;
 	static boolean adjacent = false;
-//    {
-//    	oppositeDirection.put(Direction.NORTH, Direction.SOUTH);
-//    	oppositeDirection.put(Direction.NORTHEAST, Direction.SOUTHWEST);
-//    	oppositeDirection.put(Direction.EAST, Direction.WEST);
-//    	oppositeDirection.put(Direction.SOUTHEAST, Direction.NORTHWEST);
-//    	oppositeDirection.put(Direction.SOUTH, Direction.NORTH);
-//    	oppositeDirection.put(Direction.SOUTHWEST, Direction.NORTHEAST);
-//    	oppositeDirection.put(Direction.WEST, Direction.EAST);
-//    	oppositeDirection.put(Direction.NORTHWEST, Direction.SOUTHEAST);
-//    	
-//    }
+
     static List<Direction> dirs = Arrays.asList(directions);
-//    {
-//   ;
-//    }
+
     static List<MapLocation> hqNeighbors = new ArrayList<>();
     
     /**
@@ -84,18 +73,34 @@ public strictfp class RobotPlayer {
         // and to get information on its current status.
         RobotPlayer.rc = rc;
         turnCount = 0;
-        {
-        	oppositeDirection.put(Direction.NORTH, Direction.SOUTH);
-        	oppositeDirection.put(Direction.NORTHEAST, Direction.SOUTHWEST);
-        	oppositeDirection.put(Direction.EAST, Direction.WEST);
-        	oppositeDirection.put(Direction.SOUTHEAST, Direction.NORTHWEST);
-        	oppositeDirection.put(Direction.SOUTH, Direction.NORTH);
-        	oppositeDirection.put(Direction.SOUTHWEST, Direction.NORTHEAST);
-        	oppositeDirection.put(Direction.WEST, Direction.EAST);
-        	oppositeDirection.put(Direction.NORTHWEST, Direction.SOUTHEAST);
-        	
-        }
-//        System.out.println(oppositeDirection);
+
+        oppositeDirection.put(Direction.NORTH, Direction.SOUTH);
+        oppositeDirection.put(Direction.NORTHEAST, Direction.SOUTHWEST);
+        oppositeDirection.put(Direction.EAST, Direction.WEST);
+       	oppositeDirection.put(Direction.SOUTHEAST, Direction.NORTHWEST);
+       	oppositeDirection.put(Direction.SOUTH, Direction.NORTH);
+       	oppositeDirection.put(Direction.SOUTHWEST, Direction.NORTHEAST);
+       	oppositeDirection.put(Direction.WEST, Direction.EAST);
+       	oppositeDirection.put(Direction.NORTHWEST, Direction.SOUTHEAST);
+       	
+       	Direction[] north = {Direction.NORTHWEST, Direction.NORTHEAST};
+       	Direction[] northeast = {Direction.NORTH, Direction.EAST};
+       	Direction[] east = {Direction.NORTHEAST, Direction.SOUTHEAST};
+       	Direction[] southeast = {Direction.SOUTH, Direction.EAST};
+       	Direction[] south = {Direction.SOUTHEAST, Direction.SOUTHWEST};
+       	Direction[] southwest = {Direction.SOUTH, Direction.WEST};
+       	Direction[] west = {Direction.NORTHWEST, Direction.SOUTHWEST};
+       	Direction[] northwest = {Direction.NORTH, Direction.WEST};
+       	
+       	alternateDirs.put(Direction.NORTH, north);
+        alternateDirs.put(Direction.NORTHEAST, northeast);
+        alternateDirs.put(Direction.EAST, west);
+       	alternateDirs.put(Direction.SOUTHEAST, southeast);
+       	alternateDirs.put(Direction.SOUTH, south);
+       	alternateDirs.put(Direction.SOUTHWEST, southwest);
+       	alternateDirs.put(Direction.WEST, east);
+       	alternateDirs.put(Direction.NORTHWEST, southeast);
+       	
 //       System.out.println("I'm a " + rc.getType() + " and I just got created!");
 //       System.out.println("and my turn count is " + turnCount);
         while (true) {
@@ -207,18 +212,6 @@ public strictfp class RobotPlayer {
         	boolean vap3Built = false;
         	boolean dsBuilt = false;
         	dsLoc = hqLoc.add(Direction.WEST).add(Direction.WEST);
-//        	// check if fulfillment center has been built
-//    		if (fcBuilt == false) {
-//	    		if (rc.senseRobotAtLocation(fcLoc).type == RobotType.FULFILLMENT_CENTER) {
-//	    			fcBuilt = true;
-//	    		}
-//    		}
-//    		// check if design school has been built
-//    		if (dsBuilt == false) {
-//    			if (rc.senseRobotAtLocation(dsLoc).type == RobotType.DESIGN_SCHOOL) {
-//    				dsBuilt = true;
-//    			}
-//    		}
     		// check if fulfillment center can be built and build it
         	if (!fcBuilt) {
         		adjacent = rc.getLocation().isAdjacentTo(fcLoc);
@@ -285,63 +278,6 @@ public strictfp class RobotPlayer {
 	    	// move in a random direction
 	        tryMove(randomDirection(last));
     	}
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-//      tryBlockchain(rc.getRoundNum());
-        // tryBuild(randomSpawnedByMiner(), randomDirection());
-//        for (Direction dir : directions)
-//            tryBuild(RobotType.FULFILLMENT_CENTER, dir);
-    	
-//    	if(vaporatorCount >= VAPORATOR_LIMIT && designCount < DESIGN_LIMIT) {
-//    		for(Direction dir: directions) {
-//    			if(rc.canBuildRobot(RobotType.DESIGN_SCHOOL, dir) && rc.canSenseLocation(hqLoc) && designCount < DESIGN_LIMIT) {
-//    				rc.buildRobot(RobotType.DESIGN_SCHOOL, dir);
-//    				designCount += 1;
-//    			}
-//    		}
-//    	}
-    	
-//    	if(rc.getRoundNum() < 500) {
-//	    	if(rc.getTeamSoup() >= RobotType.VAPORATOR.cost && !rc.canSenseLocation(hqLoc) && vaporatorCount < VAPORATOR_LIMIT) {
-//	    		for(Direction dir: directions) {
-//	    			if(rc.senseElevation(rc.getLocation()) >= hqElevation && rc.canBuildRobot(RobotType.VAPORATOR, dir)) {
-//	    				rc.buildRobot(RobotType.VAPORATOR, dir);
-//	    				vaporatorCount += 1;
-//	    			}
-//	    		}
-//	    	}
-//    	}
-//    	else if (rc.senseElevation(rc.getLocation()) <= hqElevation) {
-//        	// otherwise move randomly as usual
-//            System.out.println("I moved!");
-//        	tryMove(randomDirection(last));
-//        }
     }
 
     static void runRefinery() throws GameActionException {
@@ -390,22 +326,6 @@ public strictfp class RobotPlayer {
     		}
     	}
     	
-//    	if(hqLoc == null) {
-//   		// search surroundings for HQ
-//    		System.out.println("searching for hq....");
-//   		RobotInfo[] robots = rc.senseNearbyRobots();
-//    		for(RobotInfo robot : robots) {
-//    			if(robot.type == RobotType.HQ && robot.team == rc.getTeam()) {
-//    				hqLoc = robot.location;
-//    	    		for(Direction dir: directions) {
-//    	    			hqNeighbors.add(hqLoc.add(dir));
-//    	    		}
-//    	    		depositLoc = hqNeighbors.remove(0);
-//    				System.out.println("my depositLoc is: " + depositLoc);
-//    			}
-//    		}
-//    	}
-//    	System.out.println("Im a landscaper and have dirt: " + rc.getDirtCarrying());
 // 		checks if it is at HQ    	
     	Direction hqDir = null;
     	Direction behind = null;
@@ -448,53 +368,6 @@ public strictfp class RobotPlayer {
     		tryMove(randomDirection(last));
     	}
     	
-    	
-//    	if(depositLoc != null) {
-//	    	if(depositLoc.equals(rc.getLocation()) && rc.canDepositDirt(Direction.CENTER)) {
-//	    		System.out.println("Depositing dirt at loc: " + rc.getLocation());
-//	    		rc.depositDirt(Direction.CENTER);
-//	    	}
-//	    	
-//	    	if(rc.canSenseLocation(depositLoc) && rc.senseElevation(depositLoc) >= ELEVATION_LIMIT) {
-//	    		if(!hqNeighbors.isEmpty()) {
-//	    			depositLoc = hqNeighbors.remove(0);
-//	    		}
-//	    	}
-//	    		
-//	    	
-//	    	if(rc.getDirtCarrying() == RobotType.LANDSCAPER.dirtLimit) {
-//	    		
-//	    		Direction dirToDeposit = rc.getLocation().directionTo(depositLoc);
-//	        	if(tryMove(dirToDeposit)) {
-//	        		System.out.println("moved towards depositLoc");
-//	        	}
-//	    	}
-//	    	
-//	    	else{
-//		    	for (Direction dir: directions) {
-//			    	if(!rc.canSenseLocation(hqLoc) && rc.canDigDirt(dir)) {
-//			    		System.out.println("digging in this direction: " + rc.getLocation().add(dir));
-//			    		rc.digDirt(dir);
-//			    	}
-//		    	}
-//	    	}
-//	    	Collections.shuffle(dirs);
-//	    	for(Direction dir: dirs) {
-//	    		tryMove(dir);
-//	    	}
-//    	}
-//    	if(rc.getDirtCarrying() < RobotType.LANDSCAPER.dirtLimit) {
-//	    	for (Direction dir: directions) {
-//		    	if(rc.canDigDirt(dir)) {
-//		    		System.out.println("digging in this direction: " + rc.getLocation().add(dir));
-//		    		rc.digDirt(dir);
-//		    	}
-//	    	}
-//    	}
-//    	Collections.shuffle(dirs);
-//    	for(Direction dir: dirs) {
-//    		tryMove(dir);
-//    	}
     }
 
     static void runDeliveryDrone() throws GameActionException {
@@ -583,7 +456,18 @@ public strictfp class RobotPlayer {
             rc.move(dir);
             last = dir;
             return true;
-        } else return false;
+        } else{
+        	Direction[] altDirs = alternateDirs.get(dir);
+        	for(Direction d: altDirs) {
+                if (rc.isReady() && rc.canMove(d) && !rc.senseFlooding(rc.getLocation().add(d))) {
+                    rc.move(d);
+                    last = d;
+                    return true;
+                }
+        	}
+        }
+        return false;
+        
     }
 
     /**
