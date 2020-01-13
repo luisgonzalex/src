@@ -41,7 +41,8 @@ public strictfp class RobotPlayer {
     static int landscaperCount;
     static int droneCount = 0;
     
-    static MapLocation[] enemyHQLoc;
+    static MapLocation[] enemyHQLocs;
+    static MapLocation enemyHqLoc;
     static MapLocation hqLoc;
     static int hqElevation;
     static MapLocation lastSoupMined;
@@ -148,6 +149,10 @@ public strictfp class RobotPlayer {
 
     static void runHQ() throws GameActionException {
     	hqElevation = rc.senseElevation(rc.getLocation());
+    	enemyHQCandidates();
+    	for(MapLocation loc: enemyHQLocs) {
+    	System.out.println("ememy HQ location" + loc);
+    	}
     	if(minerCount < MINER_LIMIT || rc.getRoundNum() > TURN_LIMIT && rc.getRoundNum() % MINER_SPAWN_RATE == 0) {
         for (Direction dir : directions)
             if(tryBuild(RobotType.MINER, dir)) {
@@ -188,28 +193,73 @@ public strictfp class RobotPlayer {
     }
     
     static void enemyHQCandidates(){
-    	int x = rc.getLocation().x;
-    	int y = rc.getLocation().y;
+    	MapLocation curLoc = rc.getLocation();
+    	int x = curLoc.x;
+    	int y = curLoc.y;
+    	int mapHeight = rc.getMapHeight()-1;
+    	int mapWidth = rc.getMapWidth()-1;
     	
-    	int top = GameConstants.MAP_MAX_HEIGHT - rc.getLocation().y;
-    	int bottom = y - GameConstants.MAP_MIN_HEIGHT;
-    	int left = x - GameConstants.MAP_MIN_WIDTH;
-    	int right = GameConstants.MAP_MAX_WIDTH - x;
+    	int top = mapHeight - y;
+    	int bottom = y;
+    	int left = x;
+    	int right = mapWidth - x;
+		MapLocation loc1;
+		MapLocation loc2;
+		MapLocation loc3;
+		System.out.println("map_max_height: " + mapHeight);
+//		System.out.println("map_min_height: " + mapHeight);
+		System.out.println("map_max_width: " + mapWidth);
+//		System.out.println("map_min_width: " + GameConstants.MAP_MIN_WIDTH);
+		System.out.println("top: " + top);
+		System.out.println("bottom: " + bottom);
+		System.out.println("left: " + left);
+		System.out.println("right: " + right);
     	
     	if(top > bottom && left < right) {
     		// bottom left corner
-    		
+    		System.out.println("bottom left corner");
+    		// right above
+    		loc1 = new MapLocation(x, mapHeight-bottom);
+    		// diagonally
+    		loc2 = new MapLocation(mapWidth-left, mapHeight-bottom);
+    		// to the right
+    		loc3 = new MapLocation(mapWidth-left, y);
+
     	}
     	else if(top < bottom && left < right) {
     		// top left corner
+    		System.out.println("top left corner");
+    		// to the right
+    		loc1 = new MapLocation(mapWidth-left, y);
+    		// diagonally
+    		loc2 = new MapLocation(mapWidth-left, top);
+    		// right below
+    		loc3 = new MapLocation(x, top);
+
+
     	}
     	else if(top < bottom && left > right) {
     		// top right corner
+    		System.out.println("top right corner");
+    		// to the left
+    		loc1 = new MapLocation(right, y);
+    		// diagonally
+    		loc2 = new MapLocation(right, top);
+    		// right below
+    		loc3 = new MapLocation(x, top);
     	}
     	else {
     		// bottom right corner
+    		System.out.println("bottom right corner");
+    		// to the left
+    		loc1 = new MapLocation(right, y);
+    		// diagonally
+    		loc2 = new MapLocation(right, mapHeight-bottom);
+    		// right above
+    		loc3 = new MapLocation(x, mapHeight-bottom);
     	}
     	
+    	enemyHQLocs = new MapLocation[] {loc1, loc2, loc3};
     }
 
     static void runMiner() throws GameActionException {
