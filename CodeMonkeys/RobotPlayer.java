@@ -39,6 +39,7 @@ public strictfp class RobotPlayer {
     static int vaporatorCount;
     static int designCount;
     static int landscaperCount;
+    static int droneCount = 0;
     
     static MapLocation hqLoc;
     static int hqElevation;
@@ -47,6 +48,12 @@ public strictfp class RobotPlayer {
     static int teamSecret = 72151689;
     static HashMap<Direction, Direction> oppositeDirection = new HashMap<>();
     static Direction last;
+    static MapLocation fcLoc;
+	static MapLocation vap1;
+	static MapLocation vap2;
+	static MapLocation vap3;
+	static MapLocation dsLoc;
+	static boolean buildingMiner = false;
 //    {
 //    	oppositeDirection.put(Direction.NORTH, Direction.SOUTH);
 //    	oppositeDirection.put(Direction.NORTHEAST, Direction.SOUTHWEST);
@@ -128,18 +135,41 @@ public strictfp class RobotPlayer {
             }
     	}
     	if (rc.getRoundNum() == 1) {
-	    	int[] message = new int[7];
-	    	message[0] = teamSecret;
-	    	message[6] = rc.getLocation().x;
-	    	message[4] = rc.getLocation().y;
-        	if (rc.canSubmitTransaction(message, 1)) {
-        		rc.submitTransaction(message, 1);
+	    	int[] hqCoords = new int[7];
+	    	hqCoords[0] = teamSecret;
+	    	hqCoords[1] = 1;
+	    	hqCoords[6] = rc.getLocation().x;
+	    	hqCoords[4] = rc.getLocation().y;
+        	if (rc.canSubmitTransaction(hqCoords, 1)) {
+        		rc.submitTransaction(hqCoords, 1);
+        	}
+        	
+        	int[] fcCoords = new int[7];
+        	fcCoords[0] = teamSecret;
+        	fcCoords[1] = 2;
+        	fcCoords[6] = rc.getLocation().add(Direction.SOUTHEAST).x;
+        	fcCoords[4] = rc.getLocation().add(Direction.SOUTHEAST).y;
+        	if (rc.canSubmitTransaction(fcCoords, 1)) {
+        		rc.submitTransaction(fcCoords, 1);
+        	}
+        	
+        	int[] vapCoords = new int[7];
+        	vapCoords[0] = teamSecret;
+        	vapCoords[1] = 3;
+        	vapCoords[2] = rc.getLocation().add(Direction.NORTHWEST).x;
+        	vapCoords[3] = rc.getLocation().add(Direction.NORTHWEST).y;
+        	vapCoords[4] = rc.getLocation().add(Direction.NORTHEAST).x;
+        	vapCoords[5] = rc.getLocation().add(Direction.NORTHEAST).y;
+        	vapCoords[6] = rc.getLocation().add(Direction.SOUTHWEST).x;
+        	vapCoords[7] = rc.getLocation().add(Direction.SOUTHWEST).y;
+        	if (rc.canSubmitTransaction(vapCoords, 1)) {
+        		rc.submitTransaction(vapCoords, 1);
         	}
     	}
     }
 
     static void runMiner() throws GameActionException {
-    	if(hqLoc == null) {
+    	if (hqLoc == null) {
     		// search surroundings for HQ
     		RobotInfo[] robots = rc.senseNearbyRobots();
     		for(RobotInfo robot : robots) {
@@ -149,6 +179,60 @@ public strictfp class RobotPlayer {
     			}
     		}
     	}
+    	// check if miner will be building miner
+    	if (rc.getRoundNum() == 1) {
+    		buildingMiner = true;
+    	}
+    	// code for building miner
+    	
+    	
+    	// code for normal miners
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	if (turnCount == 1) {
+    		for (Transaction tx : rc.getBlock(1)) {
+    			int[] mess = tx.getMessage();
+    			if (mess[0] == teamSecret && mess[1] == 2) {
+    				fcLoc = new MapLocation(mess[6], mess[4]);
+    			} else if (mess[0] == teamSecret && mess[1] == 3) {
+    				vap1 = new MapLocation(mess[2], mess[3]);
+    				vap2 = new MapLocation(mess[4], mess[5]);
+    				vap3 = new MapLocation(mess[6], mess[7]);
+    			}
+    		}
+    	}
+    	boolean fcBuilt = false;
+    	boolean vap1Built = false;
+    	boolean vap2Built = false;
+    	boolean vap3Built = false;
+    	boolean dsBuilt = false;
+    	dsLoc = hqLoc.add(Direction.WEST).add(Direction.WEST);
 //      tryBlockchain(rc.getRoundNum());
         // tryBuild(randomSpawnedByMiner(), randomDirection());
 //        for (Direction dir : directions)
@@ -163,7 +247,7 @@ public strictfp class RobotPlayer {
 //    		}
 //    	}
     	
-    	if(rc.getRoundNum() < 500) {
+//    	if(rc.getRoundNum() < 500) {
 //	    	if(rc.getTeamSoup() >= RobotType.VAPORATOR.cost && !rc.canSenseLocation(hqLoc) && vaporatorCount < VAPORATOR_LIMIT) {
 //	    		for(Direction dir: directions) {
 //	    			if(rc.senseElevation(rc.getLocation()) >= hqElevation && rc.canBuildRobot(RobotType.VAPORATOR, dir)) {
@@ -172,54 +256,75 @@ public strictfp class RobotPlayer {
 //	    			}
 //	    		}
 //	    	}
-	    	
-	    	if(rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && !rc.canSenseLocation(hqLoc) && designCount < DESIGN_LIMIT) { // && rc.getRoundNum() > 400) {
-	    		for(Direction dir: directions) {
-	    			if(rc.senseElevation(rc.getLocation()) >= hqElevation && rc.canBuildRobot(RobotType.DESIGN_SCHOOL, dir)) {
-	    				rc.buildRobot(RobotType.DESIGN_SCHOOL, dir);
-	    				designCount += 1;
-	    			}
+    		// check if fulfillment center has been built
+    		if (fcBuilt == false) {
+	    		if (rc.senseRobotAtLocation(fcLoc).type == RobotType.FULFILLMENT_CENTER) {
+	    			fcBuilt = true;
 	    		}
-	    	}
-	    	
+    		}
+    		// check if design school has been built
+    		if (dsBuilt == false) {
+    			if (rc.senseRobotAtLocation(dsLoc).type == RobotType.DESIGN_SCHOOL) {
+    				dsBuilt = true;
+    			}
+    		}
+    		// check if fulfillment center can be built and build it
+    		if (rc.getTeamSoup() >= RobotType.FULFILLMENT_CENTER.cost && !fcBuilt && rc.getLocation().isAdjacentTo(fcLoc)) {
+    			if (rc.canBuildRobot(RobotType.FULFILLMENT_CENTER, rc.getLocation().directionTo(fcLoc))) {
+    				rc.buildRobot(RobotType.FULFILLMENT_CENTER, rc.getLocation().directionTo(fcLoc));
+    				fcBuilt = true;
+    			}
+    		}
+	    	// tries to refine soup all around it
 	        for (Direction dir : directions) {
 	            if (tryRefine(dir)) {
 	//                System.out.println("I refined soup! " + rc.getTeamSoup());
 	            }
 	        }
+	        // tries to mine all around it
 	        for (Direction dir : directions) {
 	            if (tryMine(dir)) {
 	            	lastSoupMined = rc.getLocation().add(dir);
 	//                System.out.println("I mined soup! " + rc.getSoupCarrying());
 	            }
 	        }
+	        // go drop off soup at hq
 	        if (rc.getSoupCarrying() == rc.getType().soupLimit) {
 	//        	System.out.println("at the soup limit: " + rc.getSoupCarrying());
 	        	// time to go back to HQ
 	        	Direction dirToHQ = rc.getLocation().directionTo(hqLoc);
 	        	if(tryMove(dirToHQ)) {
 	//        		System.out.println("moved towards HQ");
-	        		System.out.println("moved to: " + rc.getLocation());
+//	        		System.out.println("moved to: " + rc.getLocation());
 	        	}
 	        }
-	        if (lastSoupMined != null && rc.getSoupCarrying() == 0) {
+	        // check if design school can be built and build it
+	    	if (rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && fcBuilt && !dsBuilt && rc.getLocation().isAdjacentTo(dsLoc)) {
+	    		if(rc.canBuildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(fcLoc))) {
+	    			rc.buildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(fcLoc));
+	    			dsBuilt = true;
+	   			}
+	    	} else {
+	    		tryMove(rc.getLocation().directionTo(fcLoc));
+	    	}
+	    	// move towards last soup mined
+	    	if (lastSoupMined != null && rc.getSoupCarrying() == 0) {
 	        	Direction dirToSoup = rc.getLocation().directionTo(lastSoupMined);
 	        	if (tryMove(dirToSoup)) {
-	        		System.out.println("moved towards last soup");
+//	        		System.out.println("moved towards last soup");
 	        	}
 	        	if (rc.getLocation() == lastSoupMined) {
 	        		lastSoupMined = null;
 	        	}
 	        }
-	        if (tryMove(randomDirection(last))) {
-	        	System.out.println("moved: " + rc.getLocation());
-	        }
-    	}
-    	else if (rc.senseElevation(rc.getLocation()) <= hqElevation) {
-        	// otherwise move randomly as usual
+	    	// move in a random direction
+	        tryMove(randomDirection(last));
+//    	}
+//    	else if (rc.senseElevation(rc.getLocation()) <= hqElevation) {
+//        	// otherwise move randomly as usual
 //            System.out.println("I moved!");
-        	tryMove(randomDirection(last));
-        }
+//        	tryMove(randomDirection(last));
+//        }
     }
 
     static void runRefinery() throws GameActionException {
@@ -241,8 +346,13 @@ public strictfp class RobotPlayer {
     }
 
     static void runFulfillmentCenter() throws GameActionException {
-        for (Direction dir : directions)
-            tryBuild(RobotType.DELIVERY_DRONE, dir);
+        for (Direction dir : directions) {
+        	if (droneCount == 0) {
+        		tryBuild(RobotType.DELIVERY_DRONE, dir);
+        		droneCount += 1;
+        	}
+        }
+        
     }
 
     static void runLandscaper() throws GameActionException {
