@@ -1010,7 +1010,19 @@ public strictfp class RobotPlayer {
     }
 
     static void runNetGun() throws GameActionException {
-
+    	if(rc.isReady()) {
+    		Team enemy = rc.getTeam().opponent();
+    		RobotInfo[] nearbyBots = rc.senseNearbyRobots(RobotType.NET_GUN.sensorRadiusSquared, enemy);
+    		if(nearbyBots.length > 0) {
+    			for(RobotInfo rob: nearbyBots) {
+    				if(rob.type == RobotType.DELIVERY_DRONE) {
+    					if(rc.canShootUnit(rob.getID())) {
+    						rc.shootUnit(rob.getID());
+    					}
+    				}
+    			}
+    		}
+    	}
     }
 
     /**
