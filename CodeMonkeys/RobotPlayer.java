@@ -30,15 +30,16 @@ public strictfp class RobotPlayer {
     static int MINER_LIMIT = 3;
     static int VAPORATOR_LIMIT = 2;
     static int DESIGN_LIMIT = 2;  
-    static int LANDSCAPER_LIMIT = 10;
+    static int LANDSCAPER_LIMIT = 6;
     static int TURN_LIMIT = 1000;
     static int MINER_SPAWN_RATE = 2;
+    static int DIRT_LIMIT = 9;
     
     static int turnCount;
     static int minerCount;
     static int vaporatorCount;
     static int designCount;
-    static int landscaperCount;
+    static int landscaperCount = 0;
     static int droneCount = 0;
     
     static MapLocation[] enemyHQLocs;
@@ -50,10 +51,13 @@ public strictfp class RobotPlayer {
     static int teamSecret = 72151689;
     static int vaporatorSecret = 721516891;
     static int netgunSecret = 721516892;
+    static int landscapersSecret1 = 721516893;
+    static int landscapersSecret2 = 721516894;
     static HashMap<Direction, Direction> oppositeDirection = new HashMap<>();
     static HashMap<Direction, Direction[]> alternateDirs = new HashMap<>();
     static Direction last;
     static MapLocation d; //for sensing soup
+    static Direction lastLast;
     
     static MapLocation loc;
     static MapLocation fcLoc;
@@ -64,11 +68,15 @@ public strictfp class RobotPlayer {
 	static MapLocation ng1Loc;
 	static MapLocation ng2Loc;
 	static MapLocation ng3Loc;
+	static MapLocation[] lsLoc = new MapLocation[7];
+	static MapLocation standLoc;
 	
 	static boolean buildingMiner = false;
 	static boolean protectorDrone = false;
+	static int lsID;
 	
 	static boolean adjacent = false;
+	static boolean atLoc = false;
 	
 	static boolean fcBuilt = false;
 	static boolean vap1Built = false;
@@ -79,6 +87,7 @@ public strictfp class RobotPlayer {
 	static boolean ng2Built = false;
 	static boolean ng3Built = false;
 	static boolean canBuild = false;
+	static Direction[] placeDirt = new Direction[3];
 
 
     
@@ -206,6 +215,30 @@ public strictfp class RobotPlayer {
         	ngCoords[4] = rc.getLocation().add(Direction.WEST).y;
         	ngCoords[5] = rc.getLocation().add(Direction.SOUTH).x;
         	ngCoords[6] = rc.getLocation().add(Direction.SOUTH).y;
+        	if (rc.canSubmitTransaction(ngCoords, 1)) {
+        		rc.submitTransaction(ngCoords, 1);
+        	}
+        	
+        	int[] lsCoords1 = new int[7];
+        	lsCoords1[0] = landscapersSecret1;
+        	lsCoords1[1] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).x;
+        	lsCoords1[2] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).y;
+        	lsCoords1[3] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).x;
+        	lsCoords1[4] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).y;
+        	lsCoords1[5] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).x;
+        	lsCoords1[6] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).y;
+        	if (rc.canSubmitTransaction(ngCoords, 1)) {
+        		rc.submitTransaction(ngCoords, 1);
+        	}
+        	
+        	int[] lsCoords2 = new int[7];
+        	lsCoords2[0] = landscapersSecret2;
+        	lsCoords2[1] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).x;
+        	lsCoords2[2] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).y;
+        	lsCoords2[3] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).x;
+        	lsCoords2[4] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).y;
+        	lsCoords2[5] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).x;
+        	lsCoords2[6] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).y;
         	if (rc.canSubmitTransaction(ngCoords, 1)) {
         		rc.submitTransaction(ngCoords, 1);
         	}
@@ -583,13 +616,53 @@ public strictfp class RobotPlayer {
     }
 
     static void runDesignSchool() throws GameActionException {
+    	if (turnCount == 1) {
+    		for (Transaction tx : rc.getBlock(1)) {
+    			int[] mess = tx.getMessage();
+    			if (mess[0] == landscapersSecret1) {
+    				lsLoc[1] = new MapLocation(mess[1], mess[2]);
+    				lsLoc[2] = new MapLocation(mess[3], mess[4]);
+    				lsLoc[3] = new MapLocation(mess[5], mess[6]);
+    			} else if (mess[0] == landscapersSecret2) {
+    				lsLoc[4] = new MapLocation(mess[1], mess[2]);
+    				lsLoc[5] = new MapLocation(mess[3], mess[4]);
+    				lsLoc[6] = new MapLocation(mess[5], mess[6]);
+    			} 
+    		}
+    	}
     	for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
 			int[] mess = tx.getMessage();
 			if (mess[0] == teamSecret && mess[1] == 6) {
 				canBuild = true;
 			}
 		}
-    	
+    	if (canBuild && landscaperCount < LANDSCAPER_LIMIT) {
+    		for (Direction dir : directions) {
+    			if (tryBuild(RobotType.LANDSCAPER, dir)) {
+    				landscaperCount += 1;
+    				int[] mess = new int[7];
+    				mess[0] = teamSecret;
+    				mess[5] = lsLoc[landscaperCount].x;
+    				mess[2] = lsLoc[landscaperCount].y;
+    				if (landscaperCount == 1) {
+    					mess[3] = 1;
+    				} else if (landscaperCount == 2) {
+    					mess[3] = 2;
+    				} else if (landscaperCount == 3) {
+    					mess[3] = 3;
+    				} else if (landscaperCount == 4) {
+    					mess[3] = 4;
+    				} else if (landscaperCount == 5) {
+    					mess[3] = 5;
+    				} else if (landscaperCount == 6) {
+    					mess[3] = 6;
+    				}
+    				if (rc.canSubmitTransaction(mess, 1)) {
+    					rc.submitTransaction(mess, 1);
+    				}
+    			}
+    		}
+    	}
 //    	if(landscaperCount < LANDSCAPER_LIMIT) {
 //    		for(Direction direction: directions) {
 //    			if(tryBuild(RobotType.LANDSCAPER, direction)) {
@@ -618,45 +691,66 @@ public strictfp class RobotPlayer {
 
     static void runLandscaper() throws GameActionException {
 //    	System.out.println(turnCount);
+    	Direction behind = null;
     	if (turnCount == 1) {
-    		for (Transaction tx : rc.getBlock(1)) {
+    		for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
     			int[] mess = tx.getMessage();
-    			if (mess[0] == teamSecret && mess[1] == 1) {
-    				hqLoc = new MapLocation(mess[6], mess[4]);
+    			if (mess[0] == teamSecret) {
+    				standLoc = new MapLocation(mess[5], mess[2]);
+    				lsID = mess[3];
+    				if (mess[3] <= 3) {
+    					behind = Direction.NORTH;
+    				} else if (mess[3] == 4) {
+    					behind = Direction.SOUTH;
+    				} else if (mess[3] == 5) {
+    					behind = Direction.WEST;
+    				} else if (mess[3] == 6) {
+    					behind = Direction.EAST;
+    				}
     			}
     		}
+    		if (lsID == 1 || lsID == 4) {
+    			placeDirt[0] = Direction.CENTER;
+    			placeDirt[1] = Direction.WEST;
+    			placeDirt[2] = Direction.EAST;
+    		} else if (lsID == 5 || lsID == 6) {
+    			placeDirt[0] = Direction.CENTER;
+    			placeDirt[1] = Direction.NORTH;
+    			placeDirt[2] = Direction.SOUTH;
+    		} else if (lsID == 2) {
+    			placeDirt[0] = Direction.CENTER;
+    			placeDirt[1] = Direction.EAST;
+    			placeDirt[2] = Direction.SOUTH;
+    		} else if (lsID == 3) {
+    			placeDirt[0] = Direction.CENTER;
+    			placeDirt[1] = Direction.WEST;
+    			placeDirt[2] = Direction.SOUTH;
+    		}
+    	} 	
+    	// walk to place
+    	loc = rc.getLocation();
+    	if (loc.directionTo(standLoc) != Direction.CENTER) {
+    		tryMove(loc.directionTo(standLoc));
+    	} else {
+    		atLoc = true;
     	}
-    	
-// 		checks if it is at HQ    	
-    	Direction hqDir = null;
-    	Direction behind = null;
-    	boolean  atHQ = false;
-    	if (atHQ == false) {
-	    	RobotInfo[] rob = rc.senseNearbyRobots(2);
-	    	for (RobotInfo r : rob) {
-		    	if (r.type == RobotType.HQ && r.team == rc.getTeam()) {
-		    		for (Direction dir : directions) {
-		    			RobotInfo attempt = rc.senseRobotAtLocation(rc.getLocation().add(dir));
-		    			if (attempt != null) {
-			    			if (attempt.type == RobotType.HQ) {
-			    				hqDir = dir;
-			    			}
-			    		}
-		    		}
-		    		behind = oppositeDirection.get(hqDir);
-		    		atHQ = true;
-	    		}
-	    	}
-	    }
 // 		dig dirt behind 
-    	if (atHQ == true && rc.getDirtCarrying() < RobotType.LANDSCAPER.dirtLimit) {
+    	if (atLoc == true && rc.getDirtCarrying() < DIRT_LIMIT) {
     		if (rc.canDigDirt(behind)) { 
     			rc.digDirt(behind);
     		}
     	}
 // 		build wall
-    	if (rc.getDirtCarrying() >= RobotType.LANDSCAPER.dirtLimit) {
-    		rc.depositDirt(Direction.CENTER);
+    	if (rc.getDirtCarrying() >= DIRT_LIMIT) {
+    		for (Direction dir : placeDirt) {
+    			if (dir != last && dir != lastLast) {
+    				if (rc.canDepositDirt(dir)) {
+    					rc.canDepositDirt(dir);
+    					lastLast = last;
+    					last = dir;
+    				}
+    			}
+    		}
     	}
 //		walking to HQ
     	Direction dirToHQ = rc.getLocation().directionTo(hqLoc);
