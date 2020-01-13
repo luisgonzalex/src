@@ -58,7 +58,7 @@ public strictfp class RobotPlayer {
     }
 
     static void runHQ() throws GameActionException {
-    	if (minerCount == 0) {
+    	if (minerCount == 0 || minerCount == 1) {
     		for (Direction dir : directions) {
                 if (tryBuild(RobotType.MINER, dir)) {
                 	minerCount += 1;

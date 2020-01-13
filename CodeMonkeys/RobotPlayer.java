@@ -25,6 +25,12 @@ public strictfp class RobotPlayer {
     };
     static RobotType[] spawnedByMiner = {RobotType.REFINERY, RobotType.VAPORATOR, RobotType.DESIGN_SCHOOL,
             RobotType.FULFILLMENT_CENTER, RobotType.NET_GUN};
+    
+    static int HQ_LOC_MESSAGE = 1;
+    static int FC_LOC_MESSAGE = 2; 
+    static int LS_BUILD_WALL = 3;
+    static int PROTECTOR_DRONE_MESSAGE = 5;
+
  
     static int ELEVATION_LIMIT = 25;
     static int MINER_LIMIT = 3;
@@ -71,6 +77,7 @@ public strictfp class RobotPlayer {
 	static MapLocation ng3Loc;
 	static MapLocation[] lsLoc = new MapLocation[7];
 	static MapLocation standLoc;
+	static MapLocation waterLoc;
 	
 	static boolean buildingMiner = false;
 	static boolean protectorDrone = false;
@@ -331,7 +338,7 @@ public strictfp class RobotPlayer {
     		if (turnCount == 1) {
         		for (Transaction tx : rc.getBlock(1)) {
         			int[] mess = tx.getMessage();
-        			if (mess[0] == teamSecret && mess[1] == 2) {
+        			if (mess[0] == teamSecret && mess[1] == FC_LOC_MESSAGE) {
         				fcLoc = new MapLocation(mess[6], mess[4]);
         			} else if (mess[0] == vaporatorSecret) {
         				vap1Loc = new MapLocation(mess[1], mess[2]);
@@ -347,7 +354,7 @@ public strictfp class RobotPlayer {
     		// check if drone exists
     		for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
     			int[] mess = tx.getMessage();
-    			if (mess[0] == teamSecret && mess[1] == 5) {
+    			if (mess[0] == teamSecret && mess[1] == PROTECTOR_DRONE_MESSAGE) {
     				canBuild = true;
     			}
     		}
@@ -630,6 +637,7 @@ public strictfp class RobotPlayer {
     	if (turnCount == 1) {
     		for (Transaction tx : rc.getBlock(1)) {
     			int[] mess = tx.getMessage();
+
     			if (mess[0] == landscapersSecret1) {
     				lsLoc[1] = new MapLocation(mess[1], mess[2]);
     				lsLoc[2] = new MapLocation(mess[3], mess[4]);
@@ -769,26 +777,28 @@ public strictfp class RobotPlayer {
     	if (turnCount == 1) {
     		for (Transaction tx : rc.getBlock(1)) {
     			int[] mess = tx.getMessage();
-    			if (mess[0] == teamSecret && mess[1] == 1) {
+    			if (mess[0] == teamSecret && mess[1] == HQ_LOC_MESSAGE) {
     				hqLoc = new MapLocation(mess[6], mess[4]);
     			}
     		}
-    	}
-    	
-    	// reads blockchain for protector drone
-    	for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
-			int[] mess = tx.getMessage();
-			if (mess[0] == teamSecret && mess[1] == 1) {
-				protectorDrone = true;
+
+	    	// reads blockchain for protector drone
+	    	for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+				int[] mess = tx.getMessage();
+				if (mess[0] == teamSecret && mess[1] == PROTECTOR_DRONE_MESSAGE) {
+					protectorDrone = true;
+				}
 			}
-		}
-    	
+    	}
+    
+    	MapLocation curLoc = rc.getLocation();
     	Team enemy = rc.getTeam().opponent();
     	// controls for protector drone
     	if (protectorDrone) {
+    		System.out.println("im the protector drone");
     		MapLocation droneLoc = hqLoc.add(Direction.EAST);
-    		if(!rc.getLocation().equals(droneLoc) && !rc.isCurrentlyHoldingUnit()){
-    			Direction dirToDroneLoc = rc.getLocation().directionTo(droneLoc);
+    		if(!curLoc.equals(droneLoc) && !rc.isCurrentlyHoldingUnit()){
+    			Direction dirToDroneLoc = curLoc.directionTo(droneLoc);
 	        	if (tryMove(dirToDroneLoc)) {
 //	        	System.out.println("moved towards last soup");
 	        	}
@@ -796,6 +806,10 @@ public strictfp class RobotPlayer {
     		}
     		if (!rc.isCurrentlyHoldingUnit()) {
                 // See if there are any enemy robots within striking range (distance 1 from lumberjack's radius)
+    			if(rc.senseFlooding(curLoc)) {
+            		Direction dirToBase = curLoc.directionTo(droneLoc);
+            		tryMove(dirToBase);
+    			}
                 RobotInfo[] pickupRobots = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, enemy);
 
                 if (pickupRobots.length > 0) {
@@ -809,18 +823,33 @@ public strictfp class RobotPlayer {
                 int closestBot = Integer.MAX_VALUE;
    
                 for(RobotInfo r: nearbyRobots) {
-                	int distToBot = rc.getLocation().distanceSquaredTo(r.location);
+                	int distToBot = curLoc.distanceSquaredTo(r.location);
                 	if(distToBot < closestBot) {
                 		approachToRobot = r;
                 	}
                 }
                 
                 if(approachToRobot != null) {
-                	Direction dirToEnemy = rc.getLocation().directionTo(approachToRobot.location);
+                	Direction dirToEnemy = curLoc.directionTo(approachToRobot.location);
                 	System.out.println(dirToEnemy);
                 	tryMove(dirToEnemy);
                 }
             } else {
+            	
+            	System.out.println("currently carrying a unit");
+            	if(waterLoc != null && !curLoc.equals(waterLoc)) {
+            		Direction dirToWater = curLoc.directionTo(waterLoc);
+            		tryMove(dirToWater);
+            	}
+            	
+            	for(Direction dir: directions) {
+            		if(rc.senseFlooding(curLoc) && rc.canDropUnit(dir)) {
+                		System.out.println("I am trying to drop the unit");
+                		rc.dropUnit(dir);
+                		waterLoc = curLoc;
+                	}
+            	}
+            	
                 // No close robots, so search for robots within sight radius
     	    	// sense for soup
             	System.out.println("carrying a unit");
