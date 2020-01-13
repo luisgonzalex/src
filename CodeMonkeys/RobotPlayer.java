@@ -856,7 +856,7 @@ public strictfp class RobotPlayer {
             } else {
             	
             	System.out.println("currently carrying a unit");
-            	if(waterLoc != null && !curLoc.equals(waterLoc)) {
+            	if(waterLoc != null && !curLoc.equals(waterLoc) && !rc.senseFlooding(curLoc)) {
             		Direction dirToWater = curLoc.directionTo(waterLoc);
             		tryMove(dirToWater);
             	}
@@ -1053,7 +1053,6 @@ public strictfp class RobotPlayer {
             }
         }
         else {
-
         	Direction[] altDirs = alternateDirs.get(dir);
         	for(Direction d: altDirs) {
                 if (rc.isReady() && rc.canMove(d) && (!rc.senseFlooding(rc.getLocation().add(d)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
