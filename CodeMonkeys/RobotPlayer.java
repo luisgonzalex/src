@@ -48,10 +48,13 @@ public strictfp class RobotPlayer {
     static MapLocation lastSoupMined;
     static MapLocation depositLoc;
     static int teamSecret = 72151689;
+    static int vaporatorSecret = 721516891;
     static HashMap<Direction, Direction> oppositeDirection = new HashMap<>();
     static HashMap<Direction, Direction[]> alternateDirs = new HashMap<>();
     static Direction last;
+    static MapLocation d; //for sensing soup
     
+    static MapLocation loc;
     static MapLocation fcLoc;
 	static MapLocation vap1Loc;
 	static MapLocation vap2Loc;
@@ -108,7 +111,6 @@ public strictfp class RobotPlayer {
        	alternateDirs.put(Direction.SOUTH, south);
        	alternateDirs.put(Direction.SOUTHWEST, southwest);
        	alternateDirs.put(Direction.WEST, west);
-       	alternateDirs.put(Direction.NORTHWEST, southeast);
        	
 //       System.out.println("I'm a " + rc.getType() + " and I just got created!");
 //       System.out.println("and my turn count is " + turnCount);
@@ -176,14 +178,13 @@ public strictfp class RobotPlayer {
         	}
         	
         	int[] vapCoords = new int[7];
-        	vapCoords[0] = teamSecret;
-        	vapCoords[1] = 3;
-        	vapCoords[2] = rc.getLocation().add(Direction.NORTHWEST).x;
-        	vapCoords[3] = rc.getLocation().add(Direction.NORTHWEST).y;
-        	vapCoords[4] = rc.getLocation().add(Direction.NORTHEAST).x;
-        	vapCoords[5] = rc.getLocation().add(Direction.NORTHEAST).y;
-        	vapCoords[6] = rc.getLocation().add(Direction.SOUTHWEST).x;
-//        	vapCoords[7] = rc.getLocation().add(Direction.SOUTHWEST).y;
+        	vapCoords[0] = vaporatorSecret;
+        	vapCoords[1] = rc.getLocation().add(Direction.NORTHWEST).x;
+        	vapCoords[2] = rc.getLocation().add(Direction.NORTHWEST).y;
+        	vapCoords[3] = rc.getLocation().add(Direction.NORTHEAST).x;
+        	vapCoords[4] = rc.getLocation().add(Direction.NORTHEAST).y;
+        	vapCoords[5] = rc.getLocation().add(Direction.SOUTHWEST).x;
+        	vapCoords[6] = rc.getLocation().add(Direction.SOUTHWEST).y;
         	if (rc.canSubmitTransaction(vapCoords, 1)) {
         		rc.submitTransaction(vapCoords, 1);
         	}
@@ -268,18 +269,18 @@ public strictfp class RobotPlayer {
     		buildingMiner = true;
     	}
     	// code for building miner
+    	System.out.println(Clock.getBytecodesLeft());
     	if (buildingMiner) {
-//    		System.out.println("I am building miner!");
     		// get locations of buildings from blockchain
     		if (turnCount == 1) {
         		for (Transaction tx : rc.getBlock(1)) {
         			int[] mess = tx.getMessage();
         			if (mess[0] == teamSecret && mess[1] == 2) {
         				fcLoc = new MapLocation(mess[6], mess[4]);
-        			} else if (mess[0] == teamSecret && mess[1] == 3) {
-        				vap1Loc = new MapLocation(mess[2], mess[3]);
-        				vap2Loc = new MapLocation(mess[4], mess[5]);
- //       				vap3Loc = new MapLocation(mess[6], mess[7]);
+        			} else if (mess[0] == vaporatorSecret) {
+        				vap1Loc = new MapLocation(mess[1], mess[2]);
+        				vap2Loc = new MapLocation(mess[3], mess[4]);
+        				vap3Loc = new MapLocation(mess[5], mess[6]);
         			}
         		}
         	}
@@ -287,7 +288,6 @@ public strictfp class RobotPlayer {
     		// check if fulfillment center can be built and build it
         	if (!fcBuilt) {
         		adjacent = rc.getLocation().isAdjacentTo(fcLoc);
-//        	System.out.println(adjacent);
 	    		if (rc.getTeamSoup() >= RobotType.FULFILLMENT_CENTER.cost && !fcBuilt && adjacent) {
 	    			if (rc.canBuildRobot(RobotType.FULFILLMENT_CENTER, rc.getLocation().directionTo(fcLoc))) {
 	    				rc.buildRobot(RobotType.FULFILLMENT_CENTER, rc.getLocation().directionTo(fcLoc));
@@ -298,10 +298,10 @@ public strictfp class RobotPlayer {
 	    		}
         	}
     		// check if design school can be built and build it
-    		if (fcBuilt) {
+    		if (fcBuilt && !dsBuilt) {
     			adjacent = rc.getLocation().isAdjacentTo(dsLoc);
-		    	if (rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && fcBuilt && !dsBuilt && adjacent) {
-		    		if(rc.canBuildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc))) {
+		    	if (rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && !dsBuilt && adjacent) {
+		    		if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc))) {
 		    			rc.buildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc));
 		    			dsBuilt = true;
 		   			}
@@ -309,10 +309,45 @@ public strictfp class RobotPlayer {
 		    		tryMove(rc.getLocation().directionTo(dsLoc));
 		    	}
     		}
-//	    	tryMove(randomDirection(last));
+    		// check if vaporators can be built
+    		if (dsBuilt && !vap1Built) {
+    			adjacent = rc.getLocation().isAdjacentTo(vap1Loc);
+    			if (rc.getTeamSoup() >= RobotType.VAPORATOR.cost && !vap1Built && adjacent) {
+    				if (rc.canBuildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap1Loc))) {
+    					rc.buildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap1Loc));
+    					vap1Built = true;
+    				}
+    			} else if (!adjacent) {
+    				tryMove(rc.getLocation().directionTo(vap1Loc));
+    			}
+    		}
+    		if (vap1Built && !vap2Built) {
+    			adjacent = rc.getLocation().isAdjacentTo(vap2Loc);
+    			if (rc.getTeamSoup() >= RobotType.VAPORATOR.cost && !vap2Built && adjacent) {
+    				if (rc.canBuildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap2Loc))) {
+    					rc.buildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap2Loc));
+    					vap2Built = true;
+    				}
+    			} else if (!adjacent) {
+    				tryMove(rc.getLocation().directionTo(vap2Loc));
+    			}
+    		}
+    		if (vap2Built && !vap3Built) {
+    			adjacent = rc.getLocation().isAdjacentTo(vap3Loc);
+    			if (rc.getTeamSoup() >= RobotType.VAPORATOR.cost && !vap3Built && adjacent) {
+    				if (rc.canBuildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap3Loc))) {
+    					rc.buildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap3Loc));
+    					vap3Built = true;
+    				}
+    			} else if (!adjacent) {
+    				tryMove(rc.getLocation().directionTo(vap3Loc));
+    			}
+    		}
     	}
     	// code for normal miners
     	else {
+    		System.out.println(Clock.getBytecodesLeft());
+    		loc = rc.getLocation();
 	    	// tries to refine soup all around it
 	        for (Direction dir : directions) {
 	            if (tryRefine(dir)) {
@@ -322,7 +357,7 @@ public strictfp class RobotPlayer {
 	        // tries to mine all around it
 	        for (Direction dir : directions) {
 	            if (tryMine(dir)) {
-	            	lastSoupMined = rc.getLocation().add(dir);
+	            	lastSoupMined = loc.add(dir);
 //              System.out.println("I mined soup! " + rc.getSoupCarrying());
 	            }
 	        }
@@ -330,7 +365,7 @@ public strictfp class RobotPlayer {
 	        if (rc.getSoupCarrying() == rc.getType().soupLimit) {
 //        	System.out.println("at the soup limit: " + rc.getSoupCarrying());
 	        	// time to go back to HQ
-	        	Direction dirToHQ = rc.getLocation().directionTo(hqLoc);
+	        	Direction dirToHQ = loc.directionTo(hqLoc);
 	        	if(tryMove(dirToHQ)) {
 //        		System.out.println("moved towards HQ");
 //	        	System.out.println("moved to: " + rc.getLocation());
@@ -338,63 +373,120 @@ public strictfp class RobotPlayer {
 	        }
 	    	// move towards last soup mined
 	    	if (lastSoupMined != null && rc.getSoupCarrying() == 0) {
-	        	Direction dirToSoup = rc.getLocation().directionTo(lastSoupMined);
-	        	if (tryMove(dirToSoup)) {
-//	        	System.out.println("moved towards last soup");
-	        	}
-	        	if (rc.getLocation() == lastSoupMined) {
+	    		if (loc == lastSoupMined) {
 	        		lastSoupMined = null;
+	        	} else {
+		        	Direction dirToSoup = loc.directionTo(lastSoupMined);
+		        	if (tryMove(dirToSoup)) {
+	//	        	System.out.println("moved towards last soup");
+		        	}
 	        	}
 	        }
 	    	// sense for soup
 	    	for (Direction dir : directions) {
 	    		if (dir == Direction.NORTH) {
-	    			if (rc.senseSoup(rc.getLocation().add(dir).add(dir)) > 0) {
-	    				tryMove(dir);
+	    			d = loc.add(dir).add(dir);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
 	    			}
 	    		} else if (dir == Direction.NORTHEAST) {
-	    			if (rc.senseSoup(rc.getLocation().add(dir).add(dir)) > 0) {
-	    				tryMove(dir);
-	    			} else if (rc.senseSoup(rc.getLocation().add(dir).add(Direction.NORTH)) > 0) {
-	    				tryMove(dir);
-	    			} else if (rc.senseSoup(rc.getLocation().add(dir).add(Direction.EAST)) > 0) {
-	    				tryMove(dir);
+	    			d = loc.add(dir).add(dir);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			} 
+	    			d = loc.add(dir).add(Direction.NORTH);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			} 
+	    			d = loc.add(dir).add(Direction.EAST);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
 	    			}
 	    		} else if (dir == Direction.EAST) {
-	    			if (rc.senseSoup(rc.getLocation().add(dir).add(dir)) > 0) {
-	    				tryMove(dir);
+	    			d = loc.add(dir).add(dir);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
 	    			}
 	    		} else if (dir == Direction.SOUTHEAST) {
-	    			if (rc.senseSoup(rc.getLocation().add(dir).add(dir)) > 0) {
-	    				tryMove(dir);
-	    			} else if (rc.senseSoup(rc.getLocation().add(dir).add(Direction.SOUTH)) > 0) {
-	    				tryMove(dir);
-	    			} else if (rc.senseSoup(rc.getLocation().add(dir).add(Direction.EAST)) > 0) {
-	    				tryMove(dir);
+	    			d = loc.add(dir).add(dir);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			} 
+	    			d = loc.add(dir).add(Direction.SOUTH);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    			d = loc.add(dir).add(Direction.EAST);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
 	    			}
 	    		} else if (dir == Direction.SOUTH) {
-	    			if (rc.senseSoup(rc.getLocation().add(dir).add(dir)) > 0) {
-	    				tryMove(dir);
+	    			d = loc.add(dir).add(dir);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
 	    			}
 	    		} else if (dir == Direction.SOUTHWEST) {
-	    			if (rc.senseSoup(rc.getLocation().add(dir).add(dir)) > 0) {
-	    				tryMove(dir);
-	    			} else if (rc.senseSoup(rc.getLocation().add(dir).add(Direction.SOUTH)) > 0) {
-	    				tryMove(dir);
-	    			} else if (rc.senseSoup(rc.getLocation().add(dir).add(Direction.WEST)) > 0) {
-	    				tryMove(dir);
+	    			d = loc.add(dir).add(dir);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    			d = loc.add(dir).add(Direction.SOUTH);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    			d = loc.add(dir).add(Direction.WEST);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
 	    			}
 	    		} else if (dir == Direction.WEST) {
-	    			if (rc.senseSoup(rc.getLocation().add(dir).add(dir)) > 0) {
-	    				tryMove(dir);
+	    			d = loc.add(dir).add(dir);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
 	    			}
 	    		} else if (dir == Direction.NORTHWEST) {
-	    			if (rc.senseSoup(rc.getLocation().add(dir).add(dir)) > 0) {
-	    				tryMove(dir);
-	    			} else if (rc.senseSoup(rc.getLocation().add(dir).add(Direction.NORTH)) > 0) {
-	    				tryMove(dir);
-	    			} else if (rc.senseSoup(rc.getLocation().add(dir).add(Direction.WEST)) > 0) {
-	    				tryMove(dir);
+	    			d = loc.add(dir).add(dir);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    			d = loc.add(dir).add(Direction.NORTH);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    			d = loc.add(dir).add(Direction.WEST);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
 	    			}
 	    		}
 	    	}
@@ -412,13 +504,13 @@ public strictfp class RobotPlayer {
     }
 
     static void runDesignSchool() throws GameActionException {
-    	if(landscaperCount < LANDSCAPER_LIMIT) {
-    		for(Direction direction: directions) {
-    			if(tryBuild(RobotType.LANDSCAPER, direction)) {
-    				landscaperCount += 1;
-    			}
-    		}
-    	}
+//    	if(landscaperCount < LANDSCAPER_LIMIT) {
+//    		for(Direction direction: directions) {
+//    			if(tryBuild(RobotType.LANDSCAPER, direction)) {
+//    				landscaperCount += 1;
+//    			}
+//    		}
+//    	}
     }
 
     static void runFulfillmentCenter() throws GameActionException {
@@ -546,6 +638,7 @@ public strictfp class RobotPlayer {
                 
                 if(approachToRobot != null) {
                 	Direction dirToEnemy = rc.getLocation().directionTo(approachToRobot.location);
+                	System.out.println(dirToEnemy);
                 	tryMove(dirToEnemy);
                 }
             } else {
@@ -609,14 +702,14 @@ public strictfp class RobotPlayer {
      */
     static boolean tryMove(Direction dir) throws GameActionException {
         // System.out.println("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
-        if (rc.isReady() && rc.canMove(dir) && !rc.senseFlooding(rc.getLocation().add(dir))) {
+        if (rc.isReady() && rc.canMove(dir) && (!rc.senseFlooding(rc.getLocation().add(dir)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
             rc.move(dir);
             last = dir;
             return true;
         } else {
         	Direction[] altDirs = alternateDirs.get(dir);
         	for(Direction d: altDirs) {
-                if (rc.isReady() && rc.canMove(d) && !rc.senseFlooding(rc.getLocation().add(d))) {
+                if (rc.isReady() && rc.canMove(d) && (!rc.senseFlooding(rc.getLocation().add(d)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
                     rc.move(d);
                     last = d;
                     return true;
