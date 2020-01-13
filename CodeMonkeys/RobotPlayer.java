@@ -58,6 +58,7 @@ public strictfp class RobotPlayer {
     static Direction last;
     static MapLocation d; //for sensing soup
     static Direction lastLast;
+    static boolean stop = false;
     
     static MapLocation loc;
     static MapLocation fcLoc;
@@ -88,6 +89,7 @@ public strictfp class RobotPlayer {
 	static boolean ng3Built = false;
 	static boolean canBuild = false;
 	static Direction[] placeDirt = new Direction[3];
+	static Direction behind = null;
 
 
     
@@ -168,7 +170,7 @@ public strictfp class RobotPlayer {
     	hqElevation = rc.senseElevation(rc.getLocation());
     	enemyHQCandidates();
     	for(MapLocation loc: enemyHQLocs) {
-    	System.out.println("ememy HQ location" + loc);
+//    	System.out.println("ememy HQ location" + loc);
     	}
     	if(minerCount < MINER_LIMIT) {
 	        for (Direction dir : directions)
@@ -227,8 +229,8 @@ public strictfp class RobotPlayer {
         	lsCoords1[4] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).y;
         	lsCoords1[5] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).x;
         	lsCoords1[6] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).y;
-        	if (rc.canSubmitTransaction(ngCoords, 1)) {
-        		rc.submitTransaction(ngCoords, 1);
+        	if (rc.canSubmitTransaction(lsCoords1, 1)) {
+        		rc.submitTransaction(lsCoords1, 1);
         	}
         	
         	int[] lsCoords2 = new int[7];
@@ -239,8 +241,8 @@ public strictfp class RobotPlayer {
         	lsCoords2[4] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).y;
         	lsCoords2[5] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).x;
         	lsCoords2[6] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).y;
-        	if (rc.canSubmitTransaction(ngCoords, 1)) {
-        		rc.submitTransaction(ngCoords, 1);
+        	if (rc.canSubmitTransaction(lsCoords2, 1)) {
+        		rc.submitTransaction(lsCoords2, 1);
         	}
     	}
     }
@@ -323,7 +325,7 @@ public strictfp class RobotPlayer {
     		buildingMiner = true;
     	}
     	// code for building miner
-    	System.out.println(Clock.getBytecodesLeft());
+//    	System.out.println(Clock.getBytecodesLeft());
     	if (buildingMiner) {
     		// get locations of buildings from blockchain
     		if (turnCount == 1) {
@@ -363,7 +365,7 @@ public strictfp class RobotPlayer {
 	    		}
         	}
     		// check if design school can be built and build it
-    		if (fcBuilt && !dsBuilt && canBuild) {
+    		if (ng1Built && !dsBuilt) {
     			adjacent = rc.getLocation().isAdjacentTo(dsLoc);
 		    	if (rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && !dsBuilt && adjacent) {
 		    		if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc))) {
@@ -375,7 +377,7 @@ public strictfp class RobotPlayer {
 		    	}
     		}
     		// check if vaporators can be built
-    		if (dsBuilt && !vap1Built) {
+    		if (fcBuilt && !vap1Built && canBuild) {
     			adjacent = rc.getLocation().isAdjacentTo(vap1Loc);
     			if (rc.getTeamSoup() >= RobotType.VAPORATOR.cost && !vap1Built && adjacent) {
     				if (rc.canBuildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap1Loc))) {
@@ -442,15 +444,24 @@ public strictfp class RobotPlayer {
     				if (rc.canBuildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng3Loc))) {
     					rc.buildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng3Loc));
     					ng3Built = true;
+    					int[] message = new int[7];
+            	    	message[0] = teamSecret;
+            	    	message[1] = LS_BUILD_WALL;
+                    	if (rc.canSubmitTransaction(message, 1)) {
+                    		rc.submitTransaction(message, 1);
+                    	}
     				}
     			} else if (!adjacent) {
     				tryMove(rc.getLocation().directionTo(ng1Loc));
     			}
     		}
+    		if (ng3Built) {
+    			buildingMiner = false;
+    		}
     	}
     	// code for normal miners
     	else {
-    		System.out.println(Clock.getBytecodesLeft());
+//    		System.out.println(Clock.getBytecodesLeft());
     		loc = rc.getLocation();
 	    	// tries to refine soup all around it
 	        for (Direction dir : directions) {
@@ -479,7 +490,7 @@ public strictfp class RobotPlayer {
 	    	if (lastSoupMined != null && rc.getSoupCarrying() == 0) {
 	    		Direction dirToSoup = loc.directionTo(lastSoupMined);
 	    		if (dirToSoup == Direction.CENTER) {
-	    			System.out.println("ran");
+//	    			System.out.println("ran");
 	        		lastSoupMined = null;
 	        	} else {
 		        	if (tryMove(dirToSoup)) {
@@ -644,19 +655,7 @@ public strictfp class RobotPlayer {
     				mess[0] = teamSecret;
     				mess[5] = lsLoc[landscaperCount].x;
     				mess[2] = lsLoc[landscaperCount].y;
-    				if (landscaperCount == 1) {
-    					mess[3] = 1;
-    				} else if (landscaperCount == 2) {
-    					mess[3] = 2;
-    				} else if (landscaperCount == 3) {
-    					mess[3] = 3;
-    				} else if (landscaperCount == 4) {
-    					mess[3] = 4;
-    				} else if (landscaperCount == 5) {
-    					mess[3] = 5;
-    				} else if (landscaperCount == 6) {
-    					mess[3] = 6;
-    				}
+    				mess[3] = landscaperCount;
     				if (rc.canSubmitTransaction(mess, 1)) {
     					rc.submitTransaction(mess, 1);
     				}
@@ -691,7 +690,6 @@ public strictfp class RobotPlayer {
 
     static void runLandscaper() throws GameActionException {
 //    	System.out.println(turnCount);
-    	Direction behind = null;
     	if (turnCount == 1) {
     		for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
     			int[] mess = tx.getMessage();
@@ -726,7 +724,15 @@ public strictfp class RobotPlayer {
     			placeDirt[1] = Direction.WEST;
     			placeDirt[2] = Direction.SOUTH;
     		}
-    	} 	
+    	}
+    	if (stop) {
+    		for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+    			int[] mess = tx.getMessage();
+    			if (mess[0] == teamSecret && mess[1] == LS_BUILD_WALL) {
+    				stop = false;
+    			}
+    		}
+    	}
     	// walk to place
     	loc = rc.getLocation();
     	if (loc.directionTo(standLoc) != Direction.CENTER) {
@@ -734,35 +740,28 @@ public strictfp class RobotPlayer {
     	} else {
     		atLoc = true;
     	}
+// 		build wall
+    	if (rc.getDirtCarrying() >= DIRT_LIMIT && !stop) {
+    		for (Direction dir : placeDirt) {
+    			if (dir != last && dir != lastLast) {
+    				if (rc.canDepositDirt(dir)) {
+    					rc.depositDirt(dir);
+    					lastLast = last;
+    					last = dir;
+    					if (rc.getDirtCarrying() == 0) {
+    						stop = true;
+    					}
+    					Clock.yield();
+    				}
+    			}
+    		}
+    	}
 // 		dig dirt behind 
     	if (atLoc == true && rc.getDirtCarrying() < DIRT_LIMIT) {
     		if (rc.canDigDirt(behind)) { 
     			rc.digDirt(behind);
     		}
     	}
-// 		build wall
-    	if (rc.getDirtCarrying() >= DIRT_LIMIT) {
-    		for (Direction dir : placeDirt) {
-    			if (dir != last && dir != lastLast) {
-    				if (rc.canDepositDirt(dir)) {
-    					rc.canDepositDirt(dir);
-    					lastLast = last;
-    					last = dir;
-    				}
-    			}
-    		}
-    	}
-//		walking to HQ
-    	Direction dirToHQ = rc.getLocation().directionTo(hqLoc);
-//    	System.out.println(hqLoc);
-//    	System.out.println(dirToHQ);
-    	if(tryMove(dirToHQ)) {
-//        		System.out.println("moved towards HQ");
-//    		System.out.println("moved to: " + rc.getLocation());
-    	} else {
-    		tryMove(randomDirection(last));
-    	}
-    	
     }
 
     static void runDeliveryDrone() throws GameActionException {
