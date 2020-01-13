@@ -49,6 +49,7 @@ public strictfp class RobotPlayer {
     static MapLocation depositLoc;
     static int teamSecret = 72151689;
     static int vaporatorSecret = 721516891;
+    static int netgunSecret = 721516892;
     static HashMap<Direction, Direction> oppositeDirection = new HashMap<>();
     static HashMap<Direction, Direction[]> alternateDirs = new HashMap<>();
     static Direction last;
@@ -60,6 +61,9 @@ public strictfp class RobotPlayer {
 	static MapLocation vap2Loc;
 	static MapLocation vap3Loc;
 	static MapLocation dsLoc;
+	static MapLocation ng1Loc;
+	static MapLocation ng2Loc;
+	static MapLocation ng3Loc;
 	
 	static boolean buildingMiner = false;
 	static boolean protectorDrone = false;
@@ -71,6 +75,10 @@ public strictfp class RobotPlayer {
 	static boolean vap2Built = false;
 	static boolean vap3Built = false;
 	static boolean dsBuilt = false;
+	static boolean ng1Built = false;
+	static boolean ng2Built = false;
+	static boolean ng3Built = false;
+	static boolean canBuild = false;
 
 
     
@@ -153,11 +161,11 @@ public strictfp class RobotPlayer {
     	for(MapLocation loc: enemyHQLocs) {
     	System.out.println("ememy HQ location" + loc);
     	}
-    	if(minerCount < MINER_LIMIT || rc.getRoundNum() > TURN_LIMIT && rc.getRoundNum() % MINER_SPAWN_RATE == 0) {
-        for (Direction dir : directions)
-            if(tryBuild(RobotType.MINER, dir)) {
-            	minerCount += 1;
-            }
+    	if(minerCount < MINER_LIMIT) {
+	        for (Direction dir : directions)
+	            if(tryBuild(RobotType.MINER, dir)) {
+	            	minerCount += 1;
+	            }
     	}
     	if (rc.getRoundNum() == 1) {
 	    	int[] hqCoords = new int[7];
@@ -188,6 +196,18 @@ public strictfp class RobotPlayer {
         	vapCoords[6] = rc.getLocation().add(Direction.SOUTHWEST).y;
         	if (rc.canSubmitTransaction(vapCoords, 1)) {
         		rc.submitTransaction(vapCoords, 1);
+        	}
+        	
+        	int[] ngCoords = new int[7];
+        	ngCoords[0] = netgunSecret;
+        	ngCoords[1] = rc.getLocation().add(Direction.NORTH).x;
+        	ngCoords[2] = rc.getLocation().add(Direction.NORTH).y;
+        	ngCoords[3] = rc.getLocation().add(Direction.WEST).x;
+        	ngCoords[4] = rc.getLocation().add(Direction.WEST).y;
+        	ngCoords[5] = rc.getLocation().add(Direction.SOUTH).x;
+        	ngCoords[6] = rc.getLocation().add(Direction.SOUTH).y;
+        	if (rc.canSubmitTransaction(ngCoords, 1)) {
+        		rc.submitTransaction(ngCoords, 1);
         	}
     	}
     }
@@ -282,9 +302,20 @@ public strictfp class RobotPlayer {
         				vap1Loc = new MapLocation(mess[1], mess[2]);
         				vap2Loc = new MapLocation(mess[3], mess[4]);
         				vap3Loc = new MapLocation(mess[5], mess[6]);
+        			} else if (mess[0] == netgunSecret) {
+        				ng1Loc = new MapLocation(mess[1], mess[2]);
+        				ng2Loc = new MapLocation(mess[3], mess[4]);
+        				ng3Loc = new MapLocation(mess[5], mess[6]);
         			}
         		}
         	}
+    		// check if drone exists
+    		for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+    			int[] mess = tx.getMessage();
+    			if (mess[0] == teamSecret && mess[1] == 5) {
+    				canBuild = true;
+    			}
+    		}
         	dsLoc = hqLoc.add(Direction.WEST).add(Direction.WEST).add(Direction.WEST);
     		// check if fulfillment center can be built and build it
         	if (!fcBuilt) {
@@ -299,7 +330,7 @@ public strictfp class RobotPlayer {
 	    		}
         	}
     		// check if design school can be built and build it
-    		if (fcBuilt && !dsBuilt) {
+    		if (fcBuilt && !dsBuilt && canBuild) {
     			adjacent = rc.getLocation().isAdjacentTo(dsLoc);
 		    	if (rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && !dsBuilt && adjacent) {
 		    		if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc))) {
@@ -342,6 +373,45 @@ public strictfp class RobotPlayer {
     				}
     			} else if (!adjacent) {
     				tryMove(rc.getLocation().directionTo(vap3Loc));
+    			}
+    		}
+    		if (vap3Built && !ng1Built) {
+    			adjacent = rc.getLocation().isAdjacentTo(ng1Loc);
+    			if (rc.getTeamSoup() >= RobotType.NET_GUN.cost && !ng1Built && adjacent) {
+    				if (rc.canBuildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng1Loc))) {
+    					rc.buildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng1Loc));
+    					ng1Built = true;
+    					int[] message = new int[7];
+    		        	message[0] = teamSecret;
+    		        	message[1] = 6;
+    		        	if (rc.canSubmitTransaction(message, 1)) {
+    		        		rc.submitTransaction(message, 1);
+    		        	}
+    				}
+    			} else if (!adjacent) {
+    				tryMove(rc.getLocation().directionTo(ng1Loc));
+    			}
+    		}
+    		if (ng1Built && !ng2Built) {
+    			adjacent = rc.getLocation().isAdjacentTo(ng2Loc);
+    			if (rc.getTeamSoup() >= RobotType.NET_GUN.cost && !ng2Built && adjacent) {
+    				if (rc.canBuildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng2Loc))) {
+    					rc.buildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng2Loc));
+    					ng2Built = true;
+    				}
+    			} else if (!adjacent) {
+    				tryMove(rc.getLocation().directionTo(ng2Loc));
+    			}
+    		}
+    		if (ng2Built && !ng3Built) {
+    			adjacent = rc.getLocation().isAdjacentTo(ng3Loc);
+    			if (rc.getTeamSoup() >= RobotType.NET_GUN.cost && !ng3Built && adjacent) {
+    				if (rc.canBuildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng3Loc))) {
+    					rc.buildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng3Loc));
+    					ng3Built = true;
+    				}
+    			} else if (!adjacent) {
+    				tryMove(rc.getLocation().directionTo(ng1Loc));
     			}
     		}
     	}
@@ -492,6 +562,13 @@ public strictfp class RobotPlayer {
 	    			}
 	    		}
 	    	}
+	    	if (Math.abs(GameConstants.getWaterLevel(rc.getRoundNum()) - rc.senseElevation(loc)) <= 0.5) {
+	    		for (Direction dir : directions) {
+	    			if (rc.senseElevation(loc.add(dir)) > rc.senseElevation(loc)) {
+	    				tryMove(dir);
+	    			}
+	    		}
+	    	}
 	    	// move in a random direction
 	        tryMove(randomDirection(last));
     	}
@@ -506,6 +583,13 @@ public strictfp class RobotPlayer {
     }
 
     static void runDesignSchool() throws GameActionException {
+    	for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+			int[] mess = tx.getMessage();
+			if (mess[0] == teamSecret && mess[1] == 6) {
+				canBuild = true;
+			}
+		}
+    	
 //    	if(landscaperCount < LANDSCAPER_LIMIT) {
 //    		for(Direction direction: directions) {
 //    			if(tryBuild(RobotType.LANDSCAPER, direction)) {
@@ -521,7 +605,7 @@ public strictfp class RobotPlayer {
         		if (tryBuild(RobotType.DELIVERY_DRONE, dir)) {
         			int[] message = new int[7];
         	    	message[0] = teamSecret;
-        	    	message[1] = 1;
+        	    	message[1] = 5;
                 	if (rc.canSubmitTransaction(message, 1)) {
                 		rc.submitTransaction(message, 1);
                 	}
