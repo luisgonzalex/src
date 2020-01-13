@@ -65,6 +65,8 @@ public strictfp class RobotPlayer {
     static MapLocation d; //for sensing soup
     static Direction lastLast;
     static boolean stop = false;
+    static boolean hasStopped = false;
+    static boolean replaceDirt = true;
     
     static MapLocation loc;
     static MapLocation fcLoc;
@@ -372,7 +374,7 @@ public strictfp class RobotPlayer {
 	    		}
         	}
     		// check if design school can be built and build it
-    		if (ng1Built && !dsBuilt) {
+    		if (vap3Built && !dsBuilt) {
     			adjacent = rc.getLocation().isAdjacentTo(dsLoc);
 		    	if (rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && !dsBuilt && adjacent) {
 		    		if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc))) {
@@ -417,7 +419,7 @@ public strictfp class RobotPlayer {
     				tryMove(rc.getLocation().directionTo(vap3Loc));
     			}
     		}
-    		if (vap3Built && !ng1Built) {
+    		if (dsBuilt && !ng1Built) {
     			adjacent = rc.getLocation().isAdjacentTo(ng1Loc);
     			if (rc.getTeamSoup() >= RobotType.NET_GUN.cost && !ng1Built && adjacent) {
     				if (rc.canBuildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng1Loc))) {
@@ -615,8 +617,10 @@ public strictfp class RobotPlayer {
 	    	}
 	    	if (Math.abs(GameConstants.getWaterLevel(rc.getRoundNum()) - rc.senseElevation(loc)) <= 0.5) {
 	    		for (Direction dir : directions) {
-	    			if (rc.senseElevation(loc.add(dir)) > rc.senseElevation(loc)) {
-	    				tryMove(dir);
+	    			if (rc.canSenseLocation(loc.add(dir))) {
+		    			if (rc.senseElevation(loc.add(dir)) > rc.senseElevation(loc)) {
+		    				tryMove(dir);
+		    			}
 	    			}
 	    		}
 	    	}
@@ -637,7 +641,6 @@ public strictfp class RobotPlayer {
     	if (turnCount == 1) {
     		for (Transaction tx : rc.getBlock(1)) {
     			int[] mess = tx.getMessage();
-
     			if (mess[0] == landscapersSecret1) {
     				lsLoc[1] = new MapLocation(mess[1], mess[2]);
     				lsLoc[2] = new MapLocation(mess[3], mess[4]);
@@ -749,7 +752,8 @@ public strictfp class RobotPlayer {
     		atLoc = true;
     	}
 // 		build wall
-    	if (rc.getDirtCarrying() >= DIRT_LIMIT && !stop) {
+    	System.out.println(stop);
+    	if (!replaceDirt && !stop) {
     		for (Direction dir : placeDirt) {
     			if (dir != last && dir != lastLast) {
     				if (rc.canDepositDirt(dir)) {
@@ -757,7 +761,11 @@ public strictfp class RobotPlayer {
     					lastLast = last;
     					last = dir;
     					if (rc.getDirtCarrying() == 0) {
+    						replaceDirt = true;
+    					}
+    					if (!hasStopped && rc.getDirtCarrying() == 0) {
     						stop = true;
+    						hasStopped = true;
     					}
     					Clock.yield();
     				}
@@ -765,9 +773,12 @@ public strictfp class RobotPlayer {
     		}
     	}
 // 		dig dirt behind 
-    	if (atLoc == true && rc.getDirtCarrying() < DIRT_LIMIT) {
+    	if (atLoc == true && replaceDirt) {
     		if (rc.canDigDirt(behind)) { 
     			rc.digDirt(behind);
+    			if (rc.getDirtCarrying() == DIRT_LIMIT) {
+    				replaceDirt = false;
+    			}
     		}
     	}
     }
