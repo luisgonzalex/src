@@ -41,6 +41,7 @@ public strictfp class RobotPlayer {
     static int landscaperCount;
     static int droneCount = 0;
     
+    static MapLocation[] enemyHQLoc;
     static MapLocation hqLoc;
     static int hqElevation;
     static MapLocation lastSoupMined;
@@ -58,9 +59,7 @@ public strictfp class RobotPlayer {
 	static boolean protectorDrone = false;
 	static boolean adjacent = false;
 
-    static List<Direction> dirs = Arrays.asList(directions);
 
-    static List<MapLocation> hqNeighbors = new ArrayList<>();
     
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
@@ -132,6 +131,8 @@ public strictfp class RobotPlayer {
             }
         }
     }
+    
+
 
     static void runHQ() throws GameActionException {
     	hqElevation = rc.senseElevation(rc.getLocation());
@@ -173,6 +174,31 @@ public strictfp class RobotPlayer {
         		rc.submitTransaction(vapCoords, 1);
         	}
     	}
+    }
+    
+    static void enemyHQCandidates(){
+    	int x = rc.getLocation().x;
+    	int y = rc.getLocation().y;
+    	
+    	int top = GameConstants.MAP_MAX_HEIGHT - rc.getLocation().y;
+    	int bottom = y - GameConstants.MAP_MIN_HEIGHT;
+    	int left = x - GameConstants.MAP_MIN_WIDTH;
+    	int right = GameConstants.MAP_MAX_WIDTH - x;
+    	
+    	if(top > bottom && left < right) {
+    		// bottom left corner
+    		
+    	}
+    	else if(top < bottom && left < right) {
+    		// top left corner
+    	}
+    	else if(top < bottom && left > right) {
+    		// top right corner
+    	}
+    	else {
+    		// bottom right corner
+    	}
+    	
     }
 
     static void runMiner() throws GameActionException {
@@ -371,6 +397,16 @@ public strictfp class RobotPlayer {
     }
 
     static void runDeliveryDrone() throws GameActionException {
+        // get the HQ location on its first turn
+    	if (turnCount == 1) {
+    		for (Transaction tx : rc.getBlock(1)) {
+    			int[] mess = tx.getMessage();
+    			if (mess[0] == teamSecret && mess[1] == 1) {
+    				hqLoc = new MapLocation(mess[6], mess[4]);
+    			}
+    		}
+    	}
+    	
     	// reads blockchain for protector drone
     	for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
 			int[] mess = tx.getMessage();
@@ -382,14 +418,38 @@ public strictfp class RobotPlayer {
     	Team enemy = rc.getTeam().opponent();
     	// controls for protector drone
     	if (protectorDrone) {
+    		MapLocation droneLoc = hqLoc.add(Direction.EAST);
+    		if(!rc.getLocation().equals(droneLoc) && !rc.isCurrentlyHoldingUnit()){
+    			Direction dirToDroneLoc = rc.getLocation().directionTo(droneLoc);
+	        	if (tryMove(dirToDroneLoc)) {
+//	        	System.out.println("moved towards last soup");
+	        	}
+    			
+    		}
     		if (!rc.isCurrentlyHoldingUnit()) {
                 // See if there are any enemy robots within striking range (distance 1 from lumberjack's radius)
-                RobotInfo[] robots = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, enemy);
+                RobotInfo[] pickupRobots = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, enemy);
 
-                if (robots.length > 0) {
+                if (pickupRobots.length > 0) {
                     // Pick up a first robot within range
-                    rc.pickUpUnit(robots[0].getID());
+                    rc.pickUpUnit(pickupRobots[0].getID());
 //                    System.out.println("I picked up " + robots[0].getID() + "!");
+                }
+                
+                RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, enemy);
+                RobotInfo approachToRobot = null;
+                int closestBot = Integer.MAX_VALUE;
+   
+                for(RobotInfo r: nearbyRobots) {
+                	int distToBot = rc.getLocation().distanceSquaredTo(r.location);
+                	if(distToBot < closestBot) {
+                		approachToRobot = r;
+                	}
+                }
+                
+                if(approachToRobot != null) {
+                	Direction dirToEnemy = rc.getLocation().directionTo(approachToRobot.location);
+                	tryMove(dirToEnemy);
                 }
             } else {
                 // No close robots, so search for robots within sight radius
