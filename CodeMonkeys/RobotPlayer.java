@@ -382,10 +382,11 @@ public strictfp class RobotPlayer {
 	        }
 	    	// move towards last soup mined
 	    	if (lastSoupMined != null && rc.getSoupCarrying() == 0) {
-	    		if (loc == lastSoupMined) {
+	    		Direction dirToSoup = loc.directionTo(lastSoupMined);
+	    		if (dirToSoup == Direction.CENTER) {
+	    			System.out.println("ran");
 	        		lastSoupMined = null;
 	        	} else {
-		        	Direction dirToSoup = loc.directionTo(lastSoupMined);
 		        	if (tryMove(dirToSoup)) {
 	//	        	System.out.println("moved towards last soup");
 		        	}
