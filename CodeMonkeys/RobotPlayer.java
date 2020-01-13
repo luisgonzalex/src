@@ -62,6 +62,7 @@ public strictfp class RobotPlayer {
     static HashMap<Direction, Direction> oppositeDirection = new HashMap<>();
     static HashMap<Direction, Direction[]> alternateDirs = new HashMap<>();
     static Direction last;
+    static Direction lastDesiredDir;
     static MapLocation d; //for sensing soup
     static Direction lastLast;
     static boolean stop = false;
@@ -121,14 +122,21 @@ public strictfp class RobotPlayer {
        	oppositeDirection.put(Direction.WEST, Direction.EAST);
        	oppositeDirection.put(Direction.NORTHWEST, Direction.SOUTHEAST);
        	
-       	Direction[] north = {Direction.NORTHWEST, Direction.NORTHEAST};
-       	Direction[] northeast = {Direction.NORTH, Direction.EAST};
-       	Direction[] east = {Direction.NORTHEAST, Direction.SOUTHEAST};
-       	Direction[] southeast = {Direction.SOUTH, Direction.EAST};
-       	Direction[] south = {Direction.SOUTHEAST, Direction.SOUTHWEST};
-       	Direction[] southwest = {Direction.SOUTH, Direction.WEST};
-       	Direction[] west = {Direction.NORTHWEST, Direction.SOUTHWEST};
-       	Direction[] northwest = {Direction.NORTH, Direction.WEST};
+       	Direction[] north = {Direction.NORTHWEST, Direction.NORTHEAST, Direction.WEST, 
+       						 Direction.EAST, Direction.SOUTHWEST, Direction.SOUTHEAST, Direction.SOUTH};
+       	Direction[] northeast = {Direction.NORTH, Direction.EAST, Direction.NORTHWEST,
+       							Direction.SOUTHEAST, Direction.SOUTHWEST, Direction.SOUTH};
+       	Direction[] east = {Direction.NORTHEAST, Direction.SOUTHEAST, Direction.NORTH, 
+       						Direction.SOUTH, Direction.SOUTHWEST, Direction.SOUTHEAST};
+       	Direction[] southeast = {Direction.SOUTH, Direction.EAST, Direction.SOUTHWEST, 
+       							 Direction.NORTHEAST, Direction.NORTH, Direction.WEST, Direction.NORTHWEST};
+       	Direction[] south = {Direction.SOUTHEAST, Direction.SOUTHWEST, Direction.WEST,
+       						Direction.EAST, Direction.NORTHWEST, Direction.NORTHEAST, Direction.NORTH};
+       	Direction[] southwest = {Direction.SOUTH, Direction.WEST, Direction.NORTHWEST,
+       							 Direction.SOUTHEAST, Direction.NORTH, Direction.EAST, Direction.NORTHEAST};
+       	Direction[] west = {Direction.NORTHWEST, Direction.SOUTHWEST, Direction.NORTH,
+       						Direction.SOUTH, Direction.NORTHEAST, Direction.SOUTHEAST, Direction.EAST};
+       	Direction[] northwest = {Direction.NORTH, Direction.WEST, Direction.SOUTHWEST, Direction.NORTHEAST, Direction.SOUTH, Direction.EAST, Direction.SOUTHEAST};
        	
        	alternateDirs.put(Direction.NORTH, north);
         alternateDirs.put(Direction.NORTHEAST, northeast);
@@ -794,7 +802,7 @@ public strictfp class RobotPlayer {
     	MapLocation curLoc = rc.getLocation();
     	Team enemy = rc.getTeam().opponent();
     	// controls for protector drone
-    	if (protectorDrone) {
+    	if (protectorDrone && rc.isReady()) {
     		System.out.println("im the protector drone");
     		MapLocation droneLoc = hqLoc.add(Direction.EAST);
     		if(!curLoc.equals(droneLoc) && !rc.isCurrentlyHoldingUnit()){
@@ -843,7 +851,7 @@ public strictfp class RobotPlayer {
             	}
             	
             	for(Direction dir: directions) {
-            		if(rc.senseFlooding(curLoc) && rc.canDropUnit(dir)) {
+            		if(rc.senseFlooding(curLoc.add(dir)) && rc.canDropUnit(dir)) {
                 		System.out.println("I am trying to drop the unit");
                 		rc.dropUnit(dir);
                 		waterLoc = curLoc;
@@ -1019,22 +1027,33 @@ public strictfp class RobotPlayer {
      * @throws GameActionException
      */
     static boolean tryMove(Direction dir) throws GameActionException {
+        boolean didMove = false;
         // System.out.println("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
         if (rc.isReady() && rc.canMove(dir) && (!rc.senseFlooding(rc.getLocation().add(dir)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
             rc.move(dir);
             last = dir;
-            return true;
-        } else {
+            didMove = true;
+        } 
+        else if(lastDesiredDir != null) {
+        	if (rc.isReady() && rc.canMove(lastDesiredDir) && (!rc.senseFlooding(rc.getLocation().add(lastDesiredDir)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
+                rc.move(lastDesiredDir);
+                last = lastDesiredDir;
+                didMove = true;
+            }
+        }
+        else {
+
         	Direction[] altDirs = alternateDirs.get(dir);
         	for(Direction d: altDirs) {
                 if (rc.isReady() && rc.canMove(d) && (!rc.senseFlooding(rc.getLocation().add(d)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
                     rc.move(d);
                     last = d;
-                    return true;
+                    didMove = true;
                 }
         	}
         }
-        return false;
+        lastDesiredDir = dir;
+        return didMove;
         
     }
 
