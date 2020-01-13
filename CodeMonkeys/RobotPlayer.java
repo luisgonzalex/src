@@ -111,6 +111,7 @@ public strictfp class RobotPlayer {
        	alternateDirs.put(Direction.SOUTH, south);
        	alternateDirs.put(Direction.SOUTHWEST, southwest);
        	alternateDirs.put(Direction.WEST, west);
+       	alternateDirs.put(Direction.NORTHWEST, northwest);
        	
 //       System.out.println("I'm a " + rc.getType() + " and I just got created!");
 //       System.out.println("and my turn count is " + turnCount);
