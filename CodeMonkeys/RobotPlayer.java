@@ -103,11 +103,11 @@ public strictfp class RobotPlayer {
        	
        	alternateDirs.put(Direction.NORTH, north);
         alternateDirs.put(Direction.NORTHEAST, northeast);
-        alternateDirs.put(Direction.EAST, west);
+        alternateDirs.put(Direction.EAST, east);
        	alternateDirs.put(Direction.SOUTHEAST, southeast);
        	alternateDirs.put(Direction.SOUTH, south);
        	alternateDirs.put(Direction.SOUTHWEST, southwest);
-       	alternateDirs.put(Direction.WEST, east);
+       	alternateDirs.put(Direction.WEST, west);
        	alternateDirs.put(Direction.NORTHWEST, southeast);
        	
 //       System.out.println("I'm a " + rc.getType() + " and I just got created!");
@@ -204,18 +204,10 @@ public strictfp class RobotPlayer {
 		MapLocation loc1;
 		MapLocation loc2;
 		MapLocation loc3;
-		System.out.println("map_max_height: " + mapHeight);
-//		System.out.println("map_min_height: " + mapHeight);
-		System.out.println("map_max_width: " + mapWidth);
-//		System.out.println("map_min_width: " + GameConstants.MAP_MIN_WIDTH);
-		System.out.println("top: " + top);
-		System.out.println("bottom: " + bottom);
-		System.out.println("left: " + left);
-		System.out.println("right: " + right);
-    	
+
     	if(top > bottom && left < right) {
     		// bottom left corner
-    		System.out.println("bottom left corner");
+    	//	System.out.println("bottom left corner");
     		// right above
     		loc1 = new MapLocation(x, mapHeight-bottom);
     		// diagonally
@@ -226,7 +218,7 @@ public strictfp class RobotPlayer {
     	}
     	else if(top < bottom && left < right) {
     		// top left corner
-    		System.out.println("top left corner");
+    	//	System.out.println("top left corner");
     		// to the right
     		loc1 = new MapLocation(mapWidth-left, y);
     		// diagonally
@@ -238,7 +230,7 @@ public strictfp class RobotPlayer {
     	}
     	else if(top < bottom && left > right) {
     		// top right corner
-    		System.out.println("top right corner");
+    		//System.out.println("top right corner");
     		// to the left
     		loc1 = new MapLocation(right, y);
     		// diagonally
@@ -248,7 +240,7 @@ public strictfp class RobotPlayer {
     	}
     	else {
     		// bottom right corner
-    		System.out.println("bottom right corner");
+    		//System.out.println("bottom right corner");
     		// to the left
     		loc1 = new MapLocation(right, y);
     		// diagonally
