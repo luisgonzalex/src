@@ -729,6 +729,116 @@ public strictfp class RobotPlayer {
                 }
             } else {
                 // No close robots, so search for robots within sight radius
+    	    	// sense for soup
+            	System.out.println("carrying a unit");
+            	loc = rc.getLocation();
+    	    	for (Direction dir : directions) {
+    	    		if (dir == Direction.NORTH) {
+    	    			d = loc.add(dir).add(dir);
+    	    			if (rc.canSenseLocation(d)) {
+    	    				if (rc.senseFlooding(d)) {
+    	    					tryMove(dir);
+    	    				}
+    	    			}
+    	    		} else if (dir == Direction.NORTHEAST) {
+    	    			d = loc.add(dir).add(dir);
+    	    			if (rc.canSenseLocation(d)) {
+    	    				if (rc.senseFlooding(d)) {
+    	    					tryMove(dir);
+    	    				}
+    	    			} 
+    	    			d = loc.add(dir).add(Direction.NORTH);
+    	    			if (rc.canSenseLocation(d)) {
+    	    				if (rc.senseFlooding(d)) {
+    	    					tryMove(dir);
+    	    				}
+    	    			} 
+    	    			d = loc.add(dir).add(Direction.EAST);
+    	    			if (rc.canSenseLocation(d)) {
+    	    				if (rc.senseFlooding(d)) {
+    	    					tryMove(dir);
+    	    				}
+    	    			}
+    	    		} else if (dir == Direction.EAST) {
+    	    			d = loc.add(dir).add(dir);
+    	    			if (rc.canSenseLocation(d)) {
+    	    				if (rc.senseFlooding(d)) {
+    	    					tryMove(dir);
+    	    				}
+    	    			}
+    	    		} else if (dir == Direction.SOUTHEAST) {
+    	    			d = loc.add(dir).add(dir);
+    	    			if (rc.canSenseLocation(d)) {
+    	    				if (rc.senseFlooding(d)) {
+    	    					tryMove(dir);
+    	    				}
+    	    			} 
+    	    			d = loc.add(dir).add(Direction.SOUTH);
+    	    			if (rc.canSenseLocation(d)) {
+    	    				if (rc.senseFlooding(d)) {
+    	    					tryMove(dir);
+    	    				}
+    	    			}
+    	    			d = loc.add(dir).add(Direction.EAST);
+    	    			if (rc.canSenseLocation(d)) {
+    	    				if (rc.senseFlooding(d)) {
+    	    					tryMove(dir);
+    	    				}
+    	    			}
+    	    		} else if (dir == Direction.SOUTH) {
+    	    			d = loc.add(dir).add(dir);
+    	    			if (rc.canSenseLocation(d)) {
+    	    				if (rc.senseFlooding(d)) {
+    	    					tryMove(dir);
+    	    				}
+    	    			}
+    	    		} else if (dir == Direction.SOUTHWEST) {
+    	    			d = loc.add(dir).add(dir);
+    	    			if (rc.canSenseLocation(d)) {
+    	    				if (rc.senseFlooding(d)) {
+    	    					tryMove(dir);
+    	    				}
+    	    			}
+    	    			d = loc.add(dir).add(Direction.SOUTH);
+    	    			if (rc.canSenseLocation(d)) {
+    	    				if (rc.senseFlooding(d)) {
+    	    					tryMove(dir);
+    	    				}
+    	    			}
+    	    			d = loc.add(dir).add(Direction.WEST);
+    	    			if (rc.canSenseLocation(d)) {
+    	    				if (rc.senseFlooding(d)) {
+    	    					tryMove(dir);
+    	    				}
+    	    			}
+    	    		} else if (dir == Direction.WEST) {
+    	    			d = loc.add(dir).add(dir);
+    	    			if (rc.canSenseLocation(d)) {
+    	    				if (rc.senseFlooding(d)) {
+    	    					tryMove(dir);
+    	    				}
+    	    			}
+    	    		} else if (dir == Direction.NORTHWEST) {
+    	    			d = loc.add(dir).add(dir);
+    	    			if (rc.canSenseLocation(d)) {
+    	    				if (rc.senseFlooding(d)) {
+    	    					tryMove(dir);
+    	    				}
+    	    			}
+    	    			d = loc.add(dir).add(Direction.NORTH);
+    	    			if (rc.canSenseLocation(d)) {
+    	    				if (rc.senseFlooding(d)) {
+    	    					tryMove(dir);
+    	    				}
+    	    			}
+    	    			d = loc.add(dir).add(Direction.WEST);
+    	    			if (rc.canSenseLocation(d)) {
+    	    				if (rc.senseFlooding(d)) {
+    	    					tryMove(dir);
+    	    				}
+    	    			}
+    	    		}
+    	    	}
                 tryMove(randomDirection(last));
             }
     	}
