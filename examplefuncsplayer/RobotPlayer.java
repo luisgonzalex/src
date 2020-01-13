@@ -9,6 +9,10 @@ public strictfp class RobotPlayer {
             RobotType.FULFILLMENT_CENTER, RobotType.NET_GUN};
 
     static int turnCount;
+    
+    static int minerCount;
+    static MapLocation hqLoc;
+    static int teamSecret = 72151689;
 
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
@@ -54,24 +58,37 @@ public strictfp class RobotPlayer {
     }
 
     static void runHQ() throws GameActionException {
-        for (Direction dir : directions)
-            tryBuild(RobotType.MINER, dir);
+    	if (minerCount == 0) {
+    		for (Direction dir : directions) {
+                if (tryBuild(RobotType.MINER, dir)) {
+                	minerCount += 1;
+                }
+    		}
+    	}
     }
 
     static void runMiner() throws GameActionException {
-        tryBlockchain();
-        tryMove(randomDirection());
-        if (tryMove(randomDirection()))
-            System.out.println("I moved!");
-        // tryBuild(randomSpawnedByMiner(), randomDirection());
-        for (Direction dir : directions)
-            tryBuild(RobotType.FULFILLMENT_CENTER, dir);
-        for (Direction dir : directions)
-            if (tryDepositSoup(dir))
-                System.out.println("I deposited soup! " + rc.getTeamSoup());
-        for (Direction dir : directions)
-            if (tryMine(dir))
-                System.out.println("I mined soup! " + rc.getSoupCarrying());
+    	for (Transaction tx : rc.getBlock(1)) {
+			int[] mess = tx.getMessage();
+			if (mess[0] == teamSecret && mess[1] == 1) {
+				hqLoc = new MapLocation(mess[6], mess[4]);
+			}
+		}
+    	tryMove(rc.getLocation().directionTo(hqLoc));
+    	tryMove(randomDirection());
+//        tryBlockchain();
+//        tryMove(randomDirection());
+//        if (tryMove(randomDirection()))
+//            System.out.println("I moved!");
+//        // tryBuild(randomSpawnedByMiner(), randomDirection());
+//        for (Direction dir : directions)
+//            tryBuild(RobotType.FULFILLMENT_CENTER, dir);
+//        for (Direction dir : directions)
+//            if (tryDepositSoup(dir))
+//                System.out.println("I deposited soup! " + rc.getTeamSoup());
+//        for (Direction dir : directions)
+//            if (tryMine(dir))
+//                System.out.println("I mined soup! " + rc.getSoupCarrying());
     }
 
     static void runRefinery() throws GameActionException {
