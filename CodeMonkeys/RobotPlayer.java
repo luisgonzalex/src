@@ -878,7 +878,7 @@ public strictfp class RobotPlayer {
             } else {
             	
             	System.out.println("currently carrying a unit");
-            	if(waterLoc != null && !curLoc.equals(waterLoc)) {
+            	if(waterLoc != null && !curLoc.equals(waterLoc) && !rc.senseFlooding(curLoc)) {
             		Direction dirToWater = curLoc.directionTo(waterLoc);
             		tryMove(dirToWater);
             	}
@@ -1063,8 +1063,8 @@ public strictfp class RobotPlayer {
      */
     static boolean tryMove(Direction dir) throws GameActionException {
         boolean didMove = false;
-        System.out.println(dir);
-        System.out.println(lastDesiredDir);
+//        System.out.println(dir);
+ //       System.out.println(lastDesiredDir);
         // System.out.println("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
         if (rc.isReady() && rc.canMove(dir) && (!rc.senseFlooding(rc.getLocation().add(dir)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
             rc.move(dir);
@@ -1078,7 +1078,7 @@ public strictfp class RobotPlayer {
                 didMove = true;
             }
         }
-        System.out.println(didMove);
+//        System.out.println(didMove);
         if (!didMove){
         	Direction[] altDirs = alternateDirs.get(dir);
         	for(Direction d: altDirs) {
