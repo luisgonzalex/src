@@ -781,11 +781,13 @@ public strictfp class RobotPlayer {
     			placeDirt[2] = Direction.SOUTH;
     		}
     	}
-    	if (stop) {
+    	if (stop || !hasStopped) {
     		for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
     			int[] mess = tx.getMessage();
     			if (mess[0] == teamSecret && mess[1] == LS_BUILD_WALL) {
+    				System.out.println("l");
     				stop = false;
+    				hasStopped = true;
     			}
     		}
     	}
@@ -797,7 +799,9 @@ public strictfp class RobotPlayer {
     		atLoc = true;
     	}
 // 		build wall
-//    	System.out.println(stop);
+    	System.out.println(stop);
+    	System.out.println("pla");
+    	System.out.println(hasStopped);
     	if (!replaceDirt && !stop) {
     		for (Direction dir : placeDirt) {
     			if (dir != last && dir != lastLast) {
@@ -812,7 +816,6 @@ public strictfp class RobotPlayer {
     						stop = true;
     						hasStopped = true;
     					}
-    					Clock.yield();
     				}
     			}
     		}
