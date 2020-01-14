@@ -38,8 +38,10 @@ public strictfp class RobotPlayer {
     static int DESIGN_LIMIT = 2;  
     static int LANDSCAPER_LIMIT = 6;
     static int TURN_LIMIT = 1000;
-    static int MINER_SPAWN_RATE = 2;
+    static int MINER_SPAWN_RATE = 1;
     static int DIRT_LIMIT = 9;
+    static int DRONE_HOLD_LIMIT = 50;
+    static int REFINERY_DIST_LIMIT = 100;
     
     static int turnCount;
     static int minerCount;
@@ -101,6 +103,8 @@ public strictfp class RobotPlayer {
 	static boolean canBuild = false;
 	static Direction[] placeDirt = new Direction[3];
 	static Direction behind = null;
+	
+	static int droneHoldingFor;
 
 
     
@@ -442,7 +446,7 @@ public strictfp class RobotPlayer {
     		if (dsBuilt && !ng1Built) {
     			System.out.println("ran");
     			adjacent = rc.getLocation().isAdjacentTo(ng1Loc);
-    			if (rc.getTeamSoup() >= RobotType.NET_GUN.cost && !ng1Built && adjacent) {
+    			if (rc.getTeamSoup() > RobotType.NET_GUN.cost && !ng1Built && adjacent) {
     				if (rc.canBuildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng1Loc))) {
     					rc.buildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng1Loc));
     					ng1Built = true;
@@ -489,17 +493,18 @@ public strictfp class RobotPlayer {
     	}
     	// code for normal miners
     	else {
-    		if(turnCount == 0) {
+    		if(turnCount == 1) {
     			int radius = (int) Math.sqrt(RobotType.MINER.sensorRadiusSquared);
     			MapLocation curLoc = rc.getLocation();
     			int maxSoup = 0;
-    			for(int i=0; i < radius; i++) {
-    				for(int j=0; j < radius;j++) {
+    			for(int i=-radius-1; i < radius+1; i++) {
+    				for(int j=-radius-1; j < radius+1;j++) {
     					MapLocation loc = new MapLocation(curLoc.x+i, curLoc.y+j);
-    					int soupAtLoc = rc.senseSoup(loc);
-    					if(rc.canSenseLocation(loc) && soupAtLoc > maxSoup) {
-    						maxSoup = soupAtLoc;
+    					if(rc.canSenseLocation(loc) && rc.senseSoup(loc) > maxSoup) {
+    						maxSoup = rc.senseSoup(loc);
+    						System.out.println("Soup found at : " + loc +  "soupAmt: " + maxSoup);
     						lastSoupMined = loc;
+    						break;
     					}
     				}
     			}
@@ -534,10 +539,31 @@ public strictfp class RobotPlayer {
 	        if (rc.getSoupCarrying() == rc.getType().soupLimit) {
 //        	System.out.println("at the soup limit: " + rc.getSoupCarrying());
 	        	// time to go back to HQ
-	        	Direction dirToHQ = loc.directionTo(hqLoc);
-	        	if(tryMove(dirToHQ)) {
-//        		System.out.println("moved towards HQ");
-//	        	System.out.println("moved to: " + rc.getLocation());
+	        	int distToHQ = rc.getLocation().distanceSquaredTo(hqLoc);
+	        	if(distToHQ <= REFINERY_DIST_LIMIT) {
+		        	Direction dirToHQ = loc.directionTo(hqLoc);
+		        	if(tryMove(dirToHQ)) {
+//	        		System.out.println("moved towards HQ");
+//		        	System.out.println("moved to: " + rc.getLocation());
+		        	}
+	        	}
+	        	else {
+	        		RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, rc.getTeam());
+	        		boolean refineryBuilt = false;
+	        		for(RobotInfo rob: nearbyRobots) {
+	        			if(rob.getType() == RobotType.REFINERY) {
+	        				refineryBuilt = true;
+	        				hqLoc = rob.getLocation();
+	        			}
+	        		}
+	        		if(!refineryBuilt) {
+	        			for(Direction dir: directions) {
+	        				if(rc.canBuildRobot(RobotType.REFINERY, dir) && rc.getTeamSoup() > RobotType.REFINERY.cost) {
+	        					rc.buildRobot(RobotType.REFINERY, dir);
+	        					hqLoc = rc.getLocation().add(dir);
+	        				}
+	        			}
+	        		}
 	        	}
 	        }
 	    	// move towards last soup mined
@@ -548,7 +574,7 @@ public strictfp class RobotPlayer {
 	        		lastSoupMined = null;
 	        	} else {
 		        	if (tryMove(dirToSoup)) {
-	//	        	System.out.println("moved towards last soup");
+		        	System.out.println("moved towards last soup");
 		        	}
 	        	}
 	        }
@@ -670,7 +696,40 @@ public strictfp class RobotPlayer {
 	    		}
 	    	}
 	    	// move in a random direction
+	    	searchSoup();
+	    	if(lastSoupMined != null) {
+	    		Direction dirToSoup = loc.directionTo(lastSoupMined);
+	    		if (dirToSoup == Direction.CENTER) {
+//	    			System.out.println("ran");
+	        		lastSoupMined = null;
+	        	} else {
+		        	if (tryMove(dirToSoup)) {
+		        	System.out.println("moved towards last soup");
+		        	}
+	        	}
+	    		
+	    	}
 	        tryMove(randomDirection(last));
+    	}
+    }
+    
+    
+    static void searchSoup() throws GameActionException {
+    	if(rc.isReady()) {
+			int radius = (int) Math.sqrt(RobotType.MINER.sensorRadiusSquared);
+			MapLocation curLoc = rc.getLocation();
+			int maxSoup = 0;
+			for(int i=-radius-1; i < radius+1; i++) {
+				for(int j=-radius-1; j < radius+1;j++) {
+					MapLocation loc = new MapLocation(curLoc.x+i, curLoc.y+j);
+					if(rc.canSenseLocation(loc) && rc.senseSoup(loc) > maxSoup) {
+						maxSoup = rc.senseSoup(loc);
+						System.out.println("Soup found at : " + loc +  "soupAmt: " + maxSoup);
+						lastSoupMined = loc;
+						break;
+					}
+				}
+			}
     	}
     }
 
@@ -703,7 +762,7 @@ public strictfp class RobotPlayer {
 				canBuild = true;
 			}
 		}
-    	if (canBuild && landscaperCount < LANDSCAPER_LIMIT) {
+    	if (canBuild && landscaperCount < LANDSCAPER_LIMIT && rc.getTeamSoup() > RobotType.LANDSCAPER.cost) {
     		for (Direction dir : directions) {
     			if (tryBuild(RobotType.LANDSCAPER, dir)) {
     				landscaperCount += 1;
@@ -894,6 +953,26 @@ public strictfp class RobotPlayer {
                 	tryMove(dirToEnemy);
                 }
             } else {
+            	droneHoldingFor += 1;
+            	if(droneHoldingFor >= DRONE_HOLD_LIMIT) {
+            		int height = rc.getMapHeight();
+            		int width = rc.getMapWidth();
+            		MapLocation loc1 = new MapLocation(0, 0);
+            		MapLocation loc2 = new MapLocation(0, height);
+            		MapLocation loc3 = new MapLocation(width, 0);
+            		MapLocation loc4 = new MapLocation(width, height);
+            		MapLocation[] corners = {loc1, loc2, loc3, loc4};
+            		MapLocation closest = null;
+            		int minDist = Integer.MAX_VALUE;
+            		for(MapLocation corner: corners) {
+            			int dist = rc.getLocation().distanceSquaredTo(corner);
+            			if(dist < minDist) {
+            				closest = corner;
+            			}
+            		}
+            		waterLoc = closest;
+                        	
+            	}
             	
             	System.out.println("currently carrying a unit");
             	if(waterLoc != null && !curLoc.equals(waterLoc) && !rc.senseFlooding(curLoc)) {
