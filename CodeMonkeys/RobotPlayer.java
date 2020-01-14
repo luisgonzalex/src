@@ -489,6 +489,21 @@ public strictfp class RobotPlayer {
     	}
     	// code for normal miners
     	else {
+    		if(turnCount == 0) {
+    			int radius = (int) Math.sqrt(RobotType.MINER.sensorRadiusSquared);
+    			MapLocation curLoc = rc.getLocation();
+    			int maxSoup = 0;
+    			for(int i=0; i < radius; i++) {
+    				for(int j=0; j < radius;j++) {
+    					MapLocation loc = new MapLocation(curLoc.x+i, curLoc.y+j);
+    					int soupAtLoc = rc.senseSoup(loc);
+    					if(rc.canSenseLocation(loc) && soupAtLoc > maxSoup) {
+    						maxSoup = soupAtLoc;
+    						lastSoupMined = loc;
+    					}
+    				}
+    			}
+    		}
     		for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
     			int[] mess = tx.getMessage();
     			if (mess[0] == teamSecret && mess[1] == 7) {
