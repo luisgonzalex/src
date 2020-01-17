@@ -41,6 +41,7 @@ public strictfp class RobotPlayer {
     static int MINER_SPAWN_RATE = 1;
     static int DIRT_LIMIT = 9;
     static int DRONE_HOLD_LIMIT = 50;
+    static int DRONE_LIMIT = 10;
     static int REFINERY_DIST_LIMIT = 100;
     
     static int turnCount;
@@ -77,6 +78,7 @@ public strictfp class RobotPlayer {
     
     static MapLocation loc;
     static MapLocation fcLoc;
+    
 	static MapLocation vap1Loc;
 	static MapLocation vap2Loc;
 	static MapLocation vap3Loc;
@@ -87,14 +89,15 @@ public strictfp class RobotPlayer {
 	static MapLocation[] lsLoc = new MapLocation[7];
 	static MapLocation standLoc;
 	static MapLocation waterLoc;
-	
+
 	static boolean buildingMiner = false;
 	static boolean protectorDrone = false;
 	static int lsID;
-	
+	static int enemyHQIndex = 0;
+
 	static boolean adjacent = false;
 	static boolean atLoc = false;
-	
+
 	static boolean fcBuilt = false;
 	static boolean vap1Built = false;
 	static boolean vap2Built = false;
@@ -106,10 +109,8 @@ public strictfp class RobotPlayer {
 	static boolean canBuild = false;
 	static Direction[] placeDirt = new Direction[3];
 	static Direction behind = null;
-	
+
 	static int droneHoldingFor;
-
-
     
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
@@ -790,500 +791,558 @@ public strictfp class RobotPlayer {
 				canBuild = true;
 			}
 		}
-    	if (canBuild && landscaperCount < LANDSCAPER_LIMIT && rc.getTeamSoup() > RobotType.LANDSCAPER.cost) {
-    		for (Direction dir : directions) {
-    			if (tryBuild(RobotType.LANDSCAPER, dir)) {
-    				landscaperCount += 1;
-    				int[] mess = new int[7];
-    				mess[0] = teamSecret;
-    				mess[5] = lsLoc[landscaperCount].x;
-    				mess[2] = lsLoc[landscaperCount].y;
-    				mess[3] = landscaperCount;
-    				if (rc.canSubmitTransaction(mess, 1)) {
-    					rc.submitTransaction(mess, 1);
-    				}
-    			}
-    		}
-    	}
-//    	if(landscaperCount < LANDSCAPER_LIMIT) {
-//    		for(Direction direction: directions) {
-//    			if(tryBuild(RobotType.LANDSCAPER, direction)) {
-//    				landscaperCount += 1;
-//    			}
-//    		}
-//    	}
-    }
+		if (canBuild && landscaperCount < LANDSCAPER_LIMIT && rc.getTeamSoup() > RobotType.LANDSCAPER.cost) {
+			for (Direction dir : directions) {
+				if (tryBuild(RobotType.LANDSCAPER, dir)) {
+					landscaperCount += 1;
+					int[] mess = new int[7];
+					mess[0] = teamSecret;
+					mess[5] = lsLoc[landscaperCount].x;
+					mess[2] = lsLoc[landscaperCount].y;
+					mess[3] = landscaperCount;
+					if (rc.canSubmitTransaction(mess, 1)) {
+						rc.submitTransaction(mess, 1);
+					}
+				}
+			}
+		}
+		//    	if(landscaperCount < LANDSCAPER_LIMIT) {
+		//    		for(Direction direction: directions) {
+		//    			if(tryBuild(RobotType.LANDSCAPER, direction)) {
+		//    				landscaperCount += 1;
+		//    			}
+		//    		}
+		//    	}
+	}
 
-    static void runFulfillmentCenter() throws GameActionException {
-        for (Direction dir : directions) {
-        	if (droneCount == 0 && rc.getTeamSoup() > RobotType.DELIVERY_DRONE.cost) {
-        		if (tryBuild(RobotType.DELIVERY_DRONE, dir)) {
-        			int[] message = new int[7];
-        	    	message[0] = teamSecret;
-        	    	message[1] = 5;
-                	if (rc.canSubmitTransaction(message, 1)) {
-                		rc.submitTransaction(message, 1);
-                	}
-                	droneCount += 1;
-        		}
-        	}
-        }
-        
-    }
+	static void runFulfillmentCenter() throws GameActionException {
+		for (Direction dir : directions) {
+			if (droneCount < DRONE_LIMIT && rc.getTeamSoup() > RobotType.DELIVERY_DRONE.cost) {
+				if (tryBuild(RobotType.DELIVERY_DRONE, dir)) {
+					if(droneCount == 0) {
+						int[] message = new int[7];
+						message[0] = teamSecret;
+						message[1] = 5;
+						if (rc.canSubmitTransaction(message, 1)) {
+							rc.submitTransaction(message, 1);
+						}
+					}
+					droneCount += 1;
+				}
+			}
+		}
+	}
 
-    static void runLandscaper() throws GameActionException {
-//    	System.out.println(turnCount);
-    	if (turnCount == 1) {
-    		for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
-    			int[] mess = tx.getMessage();
-    			if (mess[0] == teamSecret) {
-    				standLoc = new MapLocation(mess[5], mess[2]);
-    				lsID = mess[3];
-    				if (mess[3] <= 3) {
-    					behind = Direction.NORTH;
-    				} else if (mess[3] == 4) {
-    					behind = Direction.SOUTH;
-    				} else if (mess[3] == 5) {
-    					behind = Direction.SOUTHWEST;
-    				} else if (mess[3] == 6) {
-    					behind = Direction.EAST;
-    				}
-    			}
-    		}
-    		if (lsID == 1 || lsID == 4) {
-    			placeDirt[0] = Direction.CENTER;
-    			placeDirt[1] = Direction.WEST;
-    			placeDirt[2] = Direction.EAST;
-    		} else if (lsID == 5 || lsID == 6) {
-    			placeDirt[0] = Direction.CENTER;
-    			placeDirt[1] = Direction.NORTH;
-    			placeDirt[2] = Direction.SOUTH;
-    		} else if (lsID == 2) {
-    			placeDirt[0] = Direction.CENTER;
-    			placeDirt[1] = Direction.EAST;
-    			placeDirt[2] = Direction.SOUTH;
-    		} else if (lsID == 3) {
-    			placeDirt[0] = Direction.CENTER;
-    			placeDirt[1] = Direction.WEST;
-    			placeDirt[2] = Direction.SOUTH;
-    		}
-    	}
-    	if (stop || !hasStopped) {
-    		for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
-    			int[] mess = tx.getMessage();
-    			if (mess[0] == teamSecret && mess[1] == LS_BUILD_WALL) {
-    				System.out.println("l");
-    				stop = false;
-    				hasStopped = true;
-    			}
-    		}
-    	}
-    	// walk to place
-    	loc = rc.getLocation();
-    	if (loc.directionTo(standLoc) != Direction.CENTER) {
-    		tryMove(loc.directionTo(standLoc));
-    	} else {
-    		atLoc = true;
-    	}
-// 		build wall
-    	System.out.println(stop);
-    	System.out.println("pla");
-    	System.out.println(hasStopped);
-    	if (!replaceDirt && !stop) {
-    		for (Direction dir : placeDirt) {
-    			if (dir != last && dir != lastLast) {
-    				if (rc.canDepositDirt(dir)) {
-    					rc.depositDirt(dir);
-    					lastLast = last;
-    					last = dir;
-    					if (rc.getDirtCarrying() == 0) {
-    						replaceDirt = true;
-    					}
-    					if (!hasStopped && rc.getDirtCarrying() == 0) {
-    						stop = true;
-    						hasStopped = true;
-    					}
-    				}
-    			}
-    		}
-    	}
-// 		dig dirt behind 
-    	if (atLoc == true && replaceDirt) {
-    		if (rc.canDigDirt(behind)) { 
-    			rc.digDirt(behind);
-    			if (rc.getDirtCarrying() == DIRT_LIMIT) {
-    				replaceDirt = false;
-    			}
-    		}
-    	}
-    }
 
-    static void runDeliveryDrone() throws GameActionException {
-        // get the HQ location on its first turn
-    	if (turnCount == 1) {
-    		for (Transaction tx : rc.getBlock(1)) {
-    			int[] mess = tx.getMessage();
-    			if (mess[0] == teamSecret && mess[1] == HQ_LOC_MESSAGE) {
-    				hqLoc = new MapLocation(mess[6], mess[4]);
-    			}
-    		}
+	static void runLandscaper() throws GameActionException {
+		//    	System.out.println(turnCount);
+		if (turnCount == 1) {
+			enemyHQCandidates();
+			
+			for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+				int[] mess = tx.getMessage();
+				if (mess[0] == teamSecret) {
+					standLoc = new MapLocation(mess[5], mess[2]);
+					lsID = mess[3];
+					if (mess[3] <= 3) {
+						behind = Direction.NORTH;
+					} else if (mess[3] == 4) {
+						behind = Direction.SOUTH;
+					} else if (mess[3] == 5) {
+						behind = Direction.SOUTHWEST;
+					} else if (mess[3] == 6) {
+						behind = Direction.EAST;
+					}
+				}
+			}
+			if (lsID == 1 || lsID == 4) {
+				placeDirt[0] = Direction.CENTER;
+				placeDirt[1] = Direction.WEST;
+				placeDirt[2] = Direction.EAST;
+			} else if (lsID == 5 || lsID == 6) {
+				placeDirt[0] = Direction.CENTER;
+				placeDirt[1] = Direction.NORTH;
+				placeDirt[2] = Direction.SOUTH;
+			} else if (lsID == 2) {
+				placeDirt[0] = Direction.CENTER;
+				placeDirt[1] = Direction.EAST;
+				placeDirt[2] = Direction.SOUTH;
+			} else if (lsID == 3) {
+				placeDirt[0] = Direction.CENTER;
+				placeDirt[1] = Direction.WEST;
+				placeDirt[2] = Direction.SOUTH;
+			}
+		}
+		if (stop || !hasStopped) {
+			for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+				int[] mess = tx.getMessage();
+				if (mess[0] == teamSecret && mess[1] == LS_BUILD_WALL) {
+					System.out.println("l");
+					stop = false;
+					hasStopped = true;
+				}
+			}
+		}
+		// walk to place
+		loc = rc.getLocation();
+		if (loc.directionTo(standLoc) != Direction.CENTER) {
+			tryMove(loc.directionTo(standLoc));
+		} else {
+			atLoc = true;
+		}
+		// 		build wall
+		System.out.println(stop);
+		System.out.println("pla");
+		System.out.println(hasStopped);
+		if (!replaceDirt && !stop) {
+			for (Direction dir : placeDirt) {
+				if (dir != last && dir != lastLast) {
+					if (rc.canDepositDirt(dir)) {
+						rc.depositDirt(dir);
+						lastLast = last;
+						last = dir;
+						if (rc.getDirtCarrying() == 0) {
+							replaceDirt = true;
+						}
+						if (!hasStopped && rc.getDirtCarrying() == 0) {
+							stop = true;
+							hasStopped = true;
+						}
+					}
+				}
+			}
+		}
+		// 		dig dirt behind 
+		if (atLoc == true && replaceDirt) {
+			if (rc.canDigDirt(behind)) { 
+				rc.digDirt(behind);
+				if (rc.getDirtCarrying() == DIRT_LIMIT) {
+					replaceDirt = false;
+				}
+			}
+		}
+	}
 
-	    	// reads blockchain for protector drone
-	    	for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+	static void runDeliveryDrone() throws GameActionException {
+		// get the HQ location on its first turn
+		if (turnCount == 1) {
+			for (Transaction tx : rc.getBlock(1)) {
+				int[] mess = tx.getMessage();
+				if (mess[0] == teamSecret && mess[1] == HQ_LOC_MESSAGE) {
+					hqLoc = new MapLocation(mess[6], mess[4]);
+				}
+			}
+
+			// reads blockchain for protector drone
+			for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
 				int[] mess = tx.getMessage();
 				if (mess[0] == teamSecret && mess[1] == PROTECTOR_DRONE_MESSAGE) {
 					protectorDrone = true;
 				}
 			}
-    	}
-    
-    	MapLocation curLoc = rc.getLocation();
-    	Team enemy = rc.getTeam().opponent();
-    	// controls for protector drone
-    	if (protectorDrone && rc.isReady()) {
-    		System.out.println("im the protector drone");
-    		MapLocation droneLoc = hqLoc.add(Direction.EAST);
-    		if(!curLoc.equals(droneLoc) && !rc.isCurrentlyHoldingUnit()){
-    			Direction dirToDroneLoc = curLoc.directionTo(droneLoc);
-	        	if (tryMove(dirToDroneLoc)) {
-//	        	System.out.println("moved towards last soup");
-	        	}
-    			
-    		}
-    		if (!rc.isCurrentlyHoldingUnit()) {
-                // See if there are any enemy robots within striking range (distance 1 from lumberjack's radius)
-    			if(rc.senseFlooding(curLoc)) {
-            		Direction dirToBase = curLoc.directionTo(droneLoc);
-            		tryMove(dirToBase);
-    			}
-                RobotInfo[] pickupRobots = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, enemy);
+		}
 
-                if (pickupRobots.length > 0) {
-                    // Pick up a first robot within range
-                    rc.pickUpUnit(pickupRobots[0].getID());
-//                    System.out.println("I picked up " + robots[0].getID() + "!");
-                }
-                
-                RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, enemy);
-                RobotInfo approachToRobot = null;
-                int closestBot = Integer.MAX_VALUE;
-   
-                for(RobotInfo r: nearbyRobots) {
-                	int distToBot = curLoc.distanceSquaredTo(r.location);
-                	if(distToBot < closestBot) {
-                		approachToRobot = r;
-                	}
-                }
-                
-                if(approachToRobot != null) {
-                	Direction dirToEnemy = curLoc.directionTo(approachToRobot.location);
-                	System.out.println(dirToEnemy);
-                	tryMove(dirToEnemy);
-                }
-            } else {
-            	droneHoldingFor += 1;
-            	if(droneHoldingFor >= DRONE_HOLD_LIMIT) {
-            		int height = rc.getMapHeight();
-            		int width = rc.getMapWidth();
-            		MapLocation loc1 = new MapLocation(0, 0);
-            		MapLocation loc2 = new MapLocation(0, height);
-            		MapLocation loc3 = new MapLocation(width, 0);
-            		MapLocation loc4 = new MapLocation(width, height);
-            		MapLocation[] corners = {loc1, loc2, loc3, loc4};
-            		MapLocation closest = null;
-            		int minDist = Integer.MAX_VALUE;
-            		for(MapLocation corner: corners) {
-            			int dist = rc.getLocation().distanceSquaredTo(corner);
-            			if(dist < minDist) {
-            				closest = corner;
-            			}
-            		}
-            		waterLoc = closest;
-                        	
-            	}
-            	
-            	System.out.println("currently carrying a unit");
-            	if(waterLoc != null && !curLoc.equals(waterLoc) && !rc.senseFlooding(curLoc)) {
-            		Direction dirToWater = curLoc.directionTo(waterLoc);
-            		tryMove(dirToWater);
-            	}
-            	
-            	for(Direction dir: directions) {
-            		if(rc.canSenseLocation(curLoc.add(dir))) {
-	            		if(rc.senseFlooding(curLoc.add(dir)) && rc.canDropUnit(dir)) {
-	                		System.out.println("I am trying to drop the unit");
-	                		rc.dropUnit(dir);
-	                		waterLoc = curLoc;
-	                	}
-            		}
-            	}
-            	
-                // No close robots, so search for robots within sight radius
-    	    	// sense for soup
-            	System.out.println("carrying a unit");
-            	loc = rc.getLocation();
-    	    	for (Direction dir : directions) {
-    	    		if (dir == Direction.NORTH) {
-    	    			d = loc.add(dir).add(dir);
-    	    			if (rc.canSenseLocation(d)) {
-    	    				if (rc.senseFlooding(d)) {
-    	    					tryMove(dir);
-    	    				}
-    	    			}
-    	    		} else if (dir == Direction.NORTHEAST) {
-    	    			d = loc.add(dir).add(dir);
-    	    			if (rc.canSenseLocation(d)) {
-    	    				if (rc.senseFlooding(d)) {
-    	    					tryMove(dir);
-    	    				}
-    	    			} 
-    	    			d = loc.add(dir).add(Direction.NORTH);
-    	    			if (rc.canSenseLocation(d)) {
-    	    				if (rc.senseFlooding(d)) {
-    	    					tryMove(dir);
-    	    				}
-    	    			} 
-    	    			d = loc.add(dir).add(Direction.EAST);
-    	    			if (rc.canSenseLocation(d)) {
-    	    				if (rc.senseFlooding(d)) {
-    	    					tryMove(dir);
-    	    				}
-    	    			}
-    	    		} else if (dir == Direction.EAST) {
-    	    			d = loc.add(dir).add(dir);
-    	    			if (rc.canSenseLocation(d)) {
-    	    				if (rc.senseFlooding(d)) {
-    	    					tryMove(dir);
-    	    				}
-    	    			}
-    	    		} else if (dir == Direction.SOUTHEAST) {
-    	    			d = loc.add(dir).add(dir);
-    	    			if (rc.canSenseLocation(d)) {
-    	    				if (rc.senseFlooding(d)) {
-    	    					tryMove(dir);
-    	    				}
-    	    			} 
-    	    			d = loc.add(dir).add(Direction.SOUTH);
-    	    			if (rc.canSenseLocation(d)) {
-    	    				if (rc.senseFlooding(d)) {
-    	    					tryMove(dir);
-    	    				}
-    	    			}
-    	    			d = loc.add(dir).add(Direction.EAST);
-    	    			if (rc.canSenseLocation(d)) {
-    	    				if (rc.senseFlooding(d)) {
-    	    					tryMove(dir);
-    	    				}
-    	    			}
-    	    		} else if (dir == Direction.SOUTH) {
-    	    			d = loc.add(dir).add(dir);
-    	    			if (rc.canSenseLocation(d)) {
-    	    				if (rc.senseFlooding(d)) {
-    	    					tryMove(dir);
-    	    				}
-    	    			}
-    	    		} else if (dir == Direction.SOUTHWEST) {
-    	    			d = loc.add(dir).add(dir);
-    	    			if (rc.canSenseLocation(d)) {
-    	    				if (rc.senseFlooding(d)) {
-    	    					tryMove(dir);
-    	    				}
-    	    			}
-    	    			d = loc.add(dir).add(Direction.SOUTH);
-    	    			if (rc.canSenseLocation(d)) {
-    	    				if (rc.senseFlooding(d)) {
-    	    					tryMove(dir);
-    	    				}
-    	    			}
-    	    			d = loc.add(dir).add(Direction.WEST);
-    	    			if (rc.canSenseLocation(d)) {
-    	    				if (rc.senseFlooding(d)) {
-    	    					tryMove(dir);
-    	    				}
-    	    			}
-    	    		} else if (dir == Direction.WEST) {
-    	    			d = loc.add(dir).add(dir);
-    	    			if (rc.canSenseLocation(d)) {
-    	    				if (rc.senseFlooding(d)) {
-    	    					tryMove(dir);
-    	    				}
-    	    			}
-    	    		} else if (dir == Direction.NORTHWEST) {
-    	    			d = loc.add(dir).add(dir);
-    	    			if (rc.canSenseLocation(d)) {
-    	    				if (rc.senseFlooding(d)) {
-    	    					tryMove(dir);
-    	    				}
-    	    			}
-    	    			d = loc.add(dir).add(Direction.NORTH);
-    	    			if (rc.canSenseLocation(d)) {
-    	    				if (rc.senseFlooding(d)) {
-    	    					tryMove(dir);
-    	    				}
-    	    			}
-    	    			d = loc.add(dir).add(Direction.WEST);
-    	    			if (rc.canSenseLocation(d)) {
-    	    				if (rc.senseFlooding(d)) {
-    	    					tryMove(dir);
-    	    				}
-    	    			}
-    	    		}
-    	    	}
-                tryMove(randomDirection(last));
-            }
-    	}
-    }
+		MapLocation curLoc = rc.getLocation();
+		Team enemy = rc.getTeam().opponent();
+		MapLocation droneLoc = hqLoc.add(Direction.EAST);
+		// controls for protector drone
+		if (protectorDrone && rc.isReady() && !rc.isCurrentlyHoldingUnit()) {
+			System.out.println("im the protector drone");
+			if(!curLoc.equals(droneLoc) && !rc.isCurrentlyHoldingUnit()){
+				Direction dirToDroneLoc = curLoc.directionTo(droneLoc);
+				if (dirToDroneLoc != Direction.CENTER && tryMove(dirToDroneLoc)) {
+					//	        	System.out.println("moved towards last soup");
+				}
 
-    static void runNetGun() throws GameActionException {
-    	if(rc.isReady()) {
-    		Team enemy = rc.getTeam().opponent();
-    		RobotInfo[] nearbyBots = rc.senseNearbyRobots(RobotType.NET_GUN.sensorRadiusSquared, enemy);
-    		if(nearbyBots.length > 0) {
-    			for(RobotInfo rob: nearbyBots) {
-    				if(rob.type == RobotType.DELIVERY_DRONE) {
-    					if(rc.canShootUnit(rob.getID())) {
-    						rc.shootUnit(rob.getID());
-    					}
-    				}
-    			}
-    		}
-    	}
-    }
+			}
+		}
+		else if(!protectorDrone && rc.isReady()) {
+			if(enemyHqLoc != null) {
+				if(rc.canSenseLocation(enemyHqLoc)) {
 
-    /**
-     * Returns a random Direction.
-     *
-     * @return a random Direction
-     */
-    static Direction randomDirection(Direction last) {
-    	Direction random = directions[(int) (Math.random() * directions.length)];
-    	while (true) {
-	    	if (random != oppositeDirection.get(last)) {
-	    		return random;
-	    	} else {
-	    		random = directions[(int) (Math.random() * directions.length)];
-	    	}
-	    }
-    }
+					RobotInfo[] pickupRobots = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, enemy);
 
-    /**
-     * Returns a random RobotType spawned by miners.
-     *
-     * @return a random RobotType
-     */
-    static RobotType randomSpawnedByMiner() {
-        return spawnedByMiner[(int) (Math.random() * spawnedByMiner.length)];
-    }
+					if (pickupRobots.length > 0) {
+						// Pick up a first robot within range
+						rc.pickUpUnit(pickupRobots[0].getID());
+						//    	                    System.out.println("I picked up " + robots[0].getID() + "!");
+					}
 
-    static boolean tryMove() throws GameActionException {
-        for (Direction dir : directions)
-            if (tryMove(dir))
-                return true;
-        return false;
-        // MapLocation loc = rc.getLocation();
-        // if (loc.x < 10 && loc.x < loc.y)
-        //     return tryMove(Direction.EAST);
-        // else if (loc.x < 10)
-        //     return tryMove(Direction.SOUTH);
-        // else if (loc.x > loc.y)
-        //     return tryMove(Direction.WEST);
-        // else
-        //     return tryMove(Direction.NORTH);
-    }
+					RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, enemy);
+					RobotInfo approachToRobot = null;
+					int closestBot = Integer.MAX_VALUE;
 
-    /**
-     * Attempts to move in a given direction.
-     *
-     * @param dir The intended direction of movement
-     * @return true if a move was performed
-     * @throws GameActionException
-     */
-    static boolean tryMove(Direction dir) throws GameActionException {
-        boolean didMove = false;
-//        System.out.println(dir);
- //       System.out.println(lastDesiredDir);
-        // System.out.println("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
-        if (rc.isReady() && rc.canMove(dir) && (!rc.senseFlooding(rc.getLocation().add(dir)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
-            rc.move(dir);
-            last = dir;
-            didMove = true;
-        } 
-        if (lastDesiredDir != null) {
-        	if (rc.isReady() && rc.canMove(lastDesiredDir) && (!rc.senseFlooding(rc.getLocation().add(lastDesiredDir)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
-                rc.move(lastDesiredDir);
-                last = lastDesiredDir;
-                didMove = true;
-            }
-        }
-//        System.out.println(didMove);
-        if (!didMove){
-        	Direction[] altDirs = alternateDirs.get(dir);
-        	for(Direction d: altDirs) {
-                if (rc.isReady() && rc.canMove(d) && (!rc.senseFlooding(rc.getLocation().add(d)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
-                    rc.move(d);
-                    last = d;
-                    didMove = true;
-                }
-        	}
-        }
-        lastDesiredDir = dir;
-        return didMove;
-        
-    }
+					for(RobotInfo r: nearbyRobots) {
+						int distToBot = curLoc.distanceSquaredTo(r.location);
+						if(distToBot < closestBot) {
+							approachToRobot = r;
+						}
+					}
 
-    /**
-     * Attempts to build a given robot in a given direction.
-     *
-     * @param type The type of the robot to build
-     * @param dir The intended direction of movement
-     * @return true if a move was performed
-     * @throws GameActionException
-     */
-    static boolean tryBuild(RobotType type, Direction dir) throws GameActionException {
-        if (rc.isReady() && rc.canBuildRobot(type, dir)) {
-            rc.buildRobot(type, dir);
-            return true;
-        } else return false;
-    }
+					if(approachToRobot != null) {
+						Direction dirToEnemy = curLoc.directionTo(approachToRobot.location);
+						System.out.println(dirToEnemy);
+						tryMove(dirToEnemy);
+					}
+				}
+				Direction dirToEnemyHQ = curLoc.directionTo(enemyHqLoc);
+				tryMove(dirToEnemyHQ);
+			}
+			if(enemyHQLocs == null) {
+				enemyHQCandidates();
+			}
+			System.out.println("enemy HQ locs " + enemyHQLocs);
+			MapLocation curCandidate = enemyHQLocs[enemyHQIndex];
+			Direction desiredDir = curLoc.directionTo(curCandidate);
+			if(rc.canSenseLocation(curCandidate)) {
+				RobotInfo enemyRobot = rc.senseRobotAtLocation(curCandidate);
+				if(enemyRobot != null && enemyRobot.team == enemy && enemyRobot.type == RobotType.HQ) {
+					enemyHqLoc = curCandidate;
+				}
+				else {
+					enemyHQIndex = (enemyHQIndex + 1) % enemyHQLocs.length;
+					curCandidate = enemyHQLocs[enemyHQIndex];
+					desiredDir = curLoc.directionTo(curCandidate);
+				}
+			}
+			tryMove(desiredDir);
+			
+		}
+		else if (!rc.isCurrentlyHoldingUnit() && rc.isReady()) {
+				// See if there are any enemy robots within striking range (distance 1 from lumberjack's radius)
+				if(rc.senseFlooding(curLoc)) {
+					Direction dirToBase = curLoc.directionTo(droneLoc);
+					tryMove(dirToBase);
+				}
+				RobotInfo[] pickupRobots = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, enemy);
 
-    /**
-     * Attempts to mine soup in a given direction.
-     *
-     * @param dir The intended direction of mining
-     * @return true if a move was performed
-     * @throws GameActionException
-     */
-    static boolean tryMine(Direction dir) throws GameActionException {
-        if (rc.isReady() && rc.canMineSoup(dir)) {
-            rc.mineSoup(dir);
-            return true;
-        } else return false;
-    }
+				if (pickupRobots.length > 0) {
+					// Pick up a first robot within range
+					rc.pickUpUnit(pickupRobots[0].getID());
+					//                    System.out.println("I picked up " + robots[0].getID() + "!");
+				}
 
-    /**
-     * Attempts to refine soup in a given direction.
-     *
-     * @param dir The intended direction of refining
-     * @return true if a move was performed
-     * @throws GameActionException
-     */
-    static boolean tryRefine(Direction dir) throws GameActionException {
-        if (rc.isReady() && rc.canDepositSoup(dir)) {
-            rc.depositSoup(dir, rc.getSoupCarrying());
-            return true;
-        } else return false;
-    }
+				RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, enemy);
+				RobotInfo approachToRobot = null;
+				int closestBot = Integer.MAX_VALUE;
+
+				for(RobotInfo r: nearbyRobots) {
+					int distToBot = curLoc.distanceSquaredTo(r.location);
+					if(distToBot < closestBot) {
+						approachToRobot = r;
+					}
+				}
+
+				if(approachToRobot != null) {
+					Direction dirToEnemy = curLoc.directionTo(approachToRobot.location);
+					System.out.println(dirToEnemy);
+					tryMove(dirToEnemy);
+				}
+			}
+		else if(rc.isReady()) {
+			droneHoldingFor += 1;
+			if(droneHoldingFor >= DRONE_HOLD_LIMIT) {
+				int height = rc.getMapHeight();
+				int width = rc.getMapWidth();
+				MapLocation loc1 = new MapLocation(0, 0);
+				MapLocation loc2 = new MapLocation(0, height);
+				MapLocation loc3 = new MapLocation(width, 0);
+				MapLocation loc4 = new MapLocation(width, height);
+				MapLocation[] corners = {loc1, loc2, loc3, loc4};
+				MapLocation closest = null;
+				int minDist = Integer.MAX_VALUE;
+				for(MapLocation corner: corners) {
+					int dist = rc.getLocation().distanceSquaredTo(corner);
+					if(dist < minDist) {
+						closest = corner;
+					}
+				}
+				waterLoc = closest;
+
+			}
+
+			System.out.println("currently carrying a unit");
+			if(waterLoc != null && !curLoc.equals(waterLoc) && !rc.senseFlooding(curLoc)) {
+				Direction dirToWater = curLoc.directionTo(waterLoc);
+				tryMove(dirToWater);
+			}
+
+			for(Direction dir: directions) {
+				if(rc.canSenseLocation(curLoc.add(dir))) {
+					if(rc.senseFlooding(curLoc.add(dir)) && rc.canDropUnit(dir)) {
+						System.out.println("I am trying to drop the unit");
+						rc.dropUnit(dir);
+						waterLoc = curLoc;
+					}
+				}
+			}
+
+			// No close robots, so search for robots within sight radius
+			// sense for soup
+			System.out.println("carrying a unit");
+			loc = rc.getLocation();
+			for (Direction dir : directions) {
+				if (dir == Direction.NORTH) {
+					d = loc.add(dir).add(dir);
+					if (rc.canSenseLocation(d)) {
+						if (rc.senseFlooding(d)) {
+							tryMove(dir);
+						}
+					}
+				} else if (dir == Direction.NORTHEAST) {
+					d = loc.add(dir).add(dir);
+					if (rc.canSenseLocation(d)) {
+						if (rc.senseFlooding(d)) {
+							tryMove(dir);
+						}
+					} 
+					d = loc.add(dir).add(Direction.NORTH);
+					if (rc.canSenseLocation(d)) {
+						if (rc.senseFlooding(d)) {
+							tryMove(dir);
+						}
+					} 
+					d = loc.add(dir).add(Direction.EAST);
+					if (rc.canSenseLocation(d)) {
+						if (rc.senseFlooding(d)) {
+							tryMove(dir);
+						}
+					}
+				} else if (dir == Direction.EAST) {
+					d = loc.add(dir).add(dir);
+					if (rc.canSenseLocation(d)) {
+						if (rc.senseFlooding(d)) {
+							tryMove(dir);
+						}
+					}
+				} else if (dir == Direction.SOUTHEAST) {
+					d = loc.add(dir).add(dir);
+					if (rc.canSenseLocation(d)) {
+						if (rc.senseFlooding(d)) {
+							tryMove(dir);
+						}
+					} 
+					d = loc.add(dir).add(Direction.SOUTH);
+					if (rc.canSenseLocation(d)) {
+						if (rc.senseFlooding(d)) {
+							tryMove(dir);
+						}
+					}
+					d = loc.add(dir).add(Direction.EAST);
+					if (rc.canSenseLocation(d)) {
+						if (rc.senseFlooding(d)) {
+							tryMove(dir);
+						}
+					}
+				} else if (dir == Direction.SOUTH) {
+					d = loc.add(dir).add(dir);
+					if (rc.canSenseLocation(d)) {
+						if (rc.senseFlooding(d)) {
+							tryMove(dir);
+						}
+					}
+				} else if (dir == Direction.SOUTHWEST) {
+					d = loc.add(dir).add(dir);
+					if (rc.canSenseLocation(d)) {
+						if (rc.senseFlooding(d)) {
+							tryMove(dir);
+						}
+					}
+					d = loc.add(dir).add(Direction.SOUTH);
+					if (rc.canSenseLocation(d)) {
+						if (rc.senseFlooding(d)) {
+							tryMove(dir);
+						}
+					}
+					d = loc.add(dir).add(Direction.WEST);
+					if (rc.canSenseLocation(d)) {
+						if (rc.senseFlooding(d)) {
+							tryMove(dir);
+						}
+					}
+				} else if (dir == Direction.WEST) {
+					d = loc.add(dir).add(dir);
+					if (rc.canSenseLocation(d)) {
+						if (rc.senseFlooding(d)) {
+							tryMove(dir);
+						}
+					}
+				} else if (dir == Direction.NORTHWEST) {
+					d = loc.add(dir).add(dir);
+					if (rc.canSenseLocation(d)) {
+						if (rc.senseFlooding(d)) {
+							tryMove(dir);
+						}
+					}
+					d = loc.add(dir).add(Direction.NORTH);
+					if (rc.canSenseLocation(d)) {
+						if (rc.senseFlooding(d)) {
+							tryMove(dir);
+						}
+					}
+					d = loc.add(dir).add(Direction.WEST);
+					if (rc.canSenseLocation(d)) {
+						if (rc.senseFlooding(d)) {
+							tryMove(dir);
+						}
+					}
+				}
+			}
+			tryMove(randomDirection(last));
+		}
+		
+	}
+
+	static void runNetGun() throws GameActionException {
+		if(rc.isReady()) {
+			Team enemy = rc.getTeam().opponent();
+			RobotInfo[] nearbyBots = rc.senseNearbyRobots(RobotType.NET_GUN.sensorRadiusSquared, enemy);
+			if(nearbyBots.length > 0) {
+				for(RobotInfo rob: nearbyBots) {
+					if(rob.type == RobotType.DELIVERY_DRONE) {
+						if(rc.canShootUnit(rob.getID())) {
+							rc.shootUnit(rob.getID());
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Returns a random Direction.
+	 *
+	 * @return a random Direction
+	 */
+	static Direction randomDirection(Direction last) {
+		Direction random = directions[(int) (Math.random() * directions.length)];
+		while (true) {
+			if (random != oppositeDirection.get(last)) {
+				return random;
+			} else {
+				random = directions[(int) (Math.random() * directions.length)];
+			}
+		}
+	}
+
+	/**
+	 * Returns a random RobotType spawned by miners.
+	 *
+	 * @return a random RobotType
+	 */
+	static RobotType randomSpawnedByMiner() {
+		return spawnedByMiner[(int) (Math.random() * spawnedByMiner.length)];
+	}
+
+	static boolean tryMove() throws GameActionException {
+		for (Direction dir : directions)
+			if (tryMove(dir))
+				return true;
+		return false;
+		// MapLocation loc = rc.getLocation();
+		// if (loc.x < 10 && loc.x < loc.y)
+		//     return tryMove(Direction.EAST);
+		// else if (loc.x < 10)
+		//     return tryMove(Direction.SOUTH);
+		// else if (loc.x > loc.y)
+		//     return tryMove(Direction.WEST);
+		// else
+		//     return tryMove(Direction.NORTH);
+	}
+
+	/**
+	 * Attempts to move in a given direction.
+	 *
+	 * @param dir The intended direction of movement
+	 * @return true if a move was performed
+	 * @throws GameActionException
+	 */
+	static boolean tryMove(Direction dir) throws GameActionException {
+		boolean didMove = false;
+		//        System.out.println(dir);
+		//       System.out.println(lastDesiredDir);
+		// System.out.println("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
+		if (rc.isReady() && rc.canMove(dir) && (!rc.senseFlooding(rc.getLocation().add(dir)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
+			rc.move(dir);
+			last = dir;
+			didMove = true;
+		} 
+		if (lastDesiredDir != null) {
+			if (rc.isReady() && rc.canMove(lastDesiredDir) && (!rc.senseFlooding(rc.getLocation().add(lastDesiredDir)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
+				rc.move(lastDesiredDir);
+				last = lastDesiredDir;
+				didMove = true;
+			}
+		}
+		//        System.out.println(didMove);
+		if (!didMove){
+			Direction[] altDirs = alternateDirs.get(dir);
+			for(Direction d: altDirs) {
+				if (rc.isReady() && rc.canMove(d) && (!rc.senseFlooding(rc.getLocation().add(d)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
+					rc.move(d);
+					last = d;
+					didMove = true;
+				}
+			}
+		}
+		lastDesiredDir = dir;
+		return didMove;
+
+	}
+
+	/**
+	 * Attempts to build a given robot in a given direction.
+	 *
+	 * @param type The type of the robot to build
+	 * @param dir The intended direction of movement
+	 * @return true if a move was performed
+	 * @throws GameActionException
+	 */
+	static boolean tryBuild(RobotType type, Direction dir) throws GameActionException {
+		if (rc.isReady() && rc.canBuildRobot(type, dir)) {
+			rc.buildRobot(type, dir);
+			return true;
+		} else return false;
+	}
+
+	/**
+	 * Attempts to mine soup in a given direction.
+	 *
+	 * @param dir The intended direction of mining
+	 * @return true if a move was performed
+	 * @throws GameActionException
+	 */
+	static boolean tryMine(Direction dir) throws GameActionException {
+		if (rc.isReady() && rc.canMineSoup(dir)) {
+			rc.mineSoup(dir);
+			return true;
+		} else return false;
+	}
+
+	/**
+	 * Attempts to refine soup in a given direction.
+	 *
+	 * @param dir The intended direction of refining
+	 * @return true if a move was performed
+	 * @throws GameActionException
+	 */
+	static boolean tryRefine(Direction dir) throws GameActionException {
+		if (rc.isReady() && rc.canDepositSoup(dir)) {
+			rc.depositSoup(dir, rc.getSoupCarrying());
+			return true;
+		} else return false;
+	}
 
 
-    static void tryBlockchain(int round) throws GameActionException {
-        if (round < 3) {
-            int[] message = new int[7];
-            for (int i = 0; i < 7; i++) {
-                message[i] = 123;
-            }
-            if (rc.canSubmitTransaction(message, 10))
-                rc.submitTransaction(message, 10);
-        }
-        // System.out.println(rc.getRoundMessages(turnCount-1));
-    }
+	static void tryBlockchain(int round) throws GameActionException {
+		if (round < 3) {
+			int[] message = new int[7];
+			for (int i = 0; i < 7; i++) {
+				message[i] = 123;
+			}
+			if (rc.canSubmitTransaction(message, 10))
+				rc.submitTransaction(message, 10);
+		}
+		// System.out.println(rc.getRoundMessages(turnCount-1));
+	}
 }
