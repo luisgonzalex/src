@@ -41,7 +41,7 @@ public strictfp class RobotPlayer {
 	static int MINER_SPAWN_RATE = 1;
 	static int DIRT_LIMIT = 9;
 	static int DRONE_HOLD_LIMIT = 50;
-	static int DRONE_LIMIT = 10;
+	static int DRONE_LIMIT = 6;
 	static int REFINERY_DIST_LIMIT = 100;
 
 	static int turnCount;
@@ -192,7 +192,7 @@ public strictfp class RobotPlayer {
 
 	static void runHQ() throws GameActionException {
 		hqElevation = rc.senseElevation(rc.getLocation());
-		enemyHQCandidates();
+		enemyHQCandidates(rc.getLocation());
 		for(MapLocation loc: enemyHQLocs) {
 			//    	System.out.println("ememy HQ location" + loc);
 		}
@@ -271,8 +271,8 @@ public strictfp class RobotPlayer {
 		}
 	}
 
-	static void enemyHQCandidates(){
-		MapLocation curLoc = rc.getLocation();
+	static void enemyHQCandidates(MapLocation hqLoc){
+		MapLocation curLoc = hqLoc;
 		int x = curLoc.x;
 		int y = curLoc.y;
 		int mapHeight = rc.getMapHeight()-1;
@@ -519,7 +519,7 @@ public strictfp class RobotPlayer {
 				}
 			}
 			if (done) {
-				enemyHQCandidates();
+				enemyHQCandidates(hqLoc);
 				Direction dirToEnemyHQ = rc.getLocation().directionTo(enemyHQLocs[0]);
 				tryMove(dirToEnemyHQ);
 			}
@@ -811,7 +811,16 @@ public strictfp class RobotPlayer {
 	static void runLandscaper() throws GameActionException {
 		//    	System.out.println(turnCount);
 		if (turnCount == 1) {
-			enemyHQCandidates();
+			RobotInfo[] nearbyRobots = rc.senseNearbyRobots();
+			for(RobotInfo rob: nearbyRobots) {
+				if(rob.team == rc.getTeam() && rob.type == RobotType.HQ) {
+					hqLoc = rob.location;
+				}
+			}
+			if(hqLoc != null) {
+				enemyHQCandidates(hqLoc);
+			}
+
 			
 			for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
 				int[] mess = tx.getMessage();
@@ -920,26 +929,25 @@ public strictfp class RobotPlayer {
 		Team enemy = rc.getTeam().opponent();
 		MapLocation droneLoc = hqLoc.add(Direction.EAST);
 		// controls for protector drone
-		if (protectorDrone && rc.isReady() && !rc.isCurrentlyHoldingUnit()) {
-			System.out.println("im the protector drone");
-			if(!curLoc.equals(droneLoc) && !rc.isCurrentlyHoldingUnit()){
-				Direction dirToDroneLoc = curLoc.directionTo(droneLoc);
-				if (dirToDroneLoc != Direction.CENTER && tryMove(dirToDroneLoc)) {
-					//	        	System.out.println("moved towards last soup");
-				}
-
+		if (protectorDrone && rc.isReady() && !rc.isCurrentlyHoldingUnit() && !curLoc.equals(droneLoc)) {
+			Direction dirToDroneLoc = curLoc.directionTo(droneLoc);
+			tryMove(dirToDroneLoc);
 			}
-		}
 		else if(!protectorDrone && rc.isReady()) {
+			if(enemyHQLocs == null) {
+				enemyHQCandidates(hqLoc);
+			}
 			if(enemyHqLoc != null) {
 				if(rc.canSenseLocation(enemyHqLoc)) {
 
 					RobotInfo[] pickupRobots = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, enemy);
 
-					if (pickupRobots.length > 0) {
-						// Pick up a first robot within range
-						rc.pickUpUnit(pickupRobots[0].getID());
-						//    	                    System.out.println("I picked up " + robots[0].getID() + "!");
+					for(RobotInfo rob: pickupRobots) {
+						if (rob.type != RobotType.HQ && rc.canPickUpUnit(rob.ID)) {
+							// Pick up a first robot within range
+							rc.pickUpUnit(rob.ID);
+							//                    System.out.println("I picked up " + robots[0].getID() + "!");
+						}
 					}
 
 					RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, enemy);
@@ -948,7 +956,7 @@ public strictfp class RobotPlayer {
 
 					for(RobotInfo r: nearbyRobots) {
 						int distToBot = curLoc.distanceSquaredTo(r.location);
-						if(distToBot < closestBot) {
+						if(r.type != RobotType.HQ && distToBot < closestBot) {
 							approachToRobot = r;
 						}
 					}
@@ -962,18 +970,16 @@ public strictfp class RobotPlayer {
 				Direction dirToEnemyHQ = curLoc.directionTo(enemyHqLoc);
 				tryMove(dirToEnemyHQ);
 			}
-			if(enemyHQLocs == null) {
-				enemyHQCandidates();
-			}
-			System.out.println("enemy HQ locs " + enemyHQLocs);
 			MapLocation curCandidate = enemyHQLocs[enemyHQIndex];
 			Direction desiredDir = curLoc.directionTo(curCandidate);
 			if(rc.canSenseLocation(curCandidate)) {
 				RobotInfo enemyRobot = rc.senseRobotAtLocation(curCandidate);
 				if(enemyRobot != null && enemyRobot.team == enemy && enemyRobot.type == RobotType.HQ) {
 					enemyHqLoc = curCandidate;
+					System.out.println("found enemy hq");
 				}
 				else {
+					System.out.println("im at hq Loc " + curCandidate + " but i didn't find hq");
 					enemyHQIndex = (enemyHQIndex + 1) % enemyHQLocs.length;
 					curCandidate = enemyHQLocs[enemyHQIndex];
 					desiredDir = curLoc.directionTo(curCandidate);
@@ -989,11 +995,13 @@ public strictfp class RobotPlayer {
 					tryMove(dirToBase);
 				}
 				RobotInfo[] pickupRobots = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, enemy);
-
-				if (pickupRobots.length > 0) {
-					// Pick up a first robot within range
-					rc.pickUpUnit(pickupRobots[0].getID());
-					//                    System.out.println("I picked up " + robots[0].getID() + "!");
+				
+				for(RobotInfo rob: pickupRobots) {
+					if (rob.type != RobotType.HQ && rc.canPickUpUnit(rob.ID)) {
+						// Pick up a first robot within range
+						rc.pickUpUnit(rob.ID);
+						//                    System.out.println("I picked up " + robots[0].getID() + "!");
+					}
 				}
 
 				RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, enemy);
