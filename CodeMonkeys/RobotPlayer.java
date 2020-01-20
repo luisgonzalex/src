@@ -13,68 +13,71 @@ public strictfp class RobotPlayer {
 
 	static RobotController rc;
 
-	static Direction[] directions = {
-			Direction.NORTH,
-			Direction.NORTHEAST,
-			Direction.EAST,
-			Direction.SOUTHEAST,
-			Direction.SOUTH,
-			Direction.SOUTHWEST,
-			Direction.WEST,
-			Direction.NORTHWEST
-	};
-	static RobotType[] spawnedByMiner = {RobotType.REFINERY, RobotType.VAPORATOR, RobotType.DESIGN_SCHOOL,
-			RobotType.FULFILLMENT_CENTER, RobotType.NET_GUN};
+    static Direction[] directions = {
+        Direction.NORTH,
+        Direction.NORTHEAST,
+        Direction.EAST,
+        Direction.SOUTHEAST,
+        Direction.SOUTH,
+        Direction.SOUTHWEST,
+        Direction.WEST,
+        Direction.NORTHWEST
+    };
+    static RobotType[] spawnedByMiner = {RobotType.REFINERY, RobotType.VAPORATOR, RobotType.DESIGN_SCHOOL,
+            RobotType.FULFILLMENT_CENTER, RobotType.NET_GUN};
+    
+    static int HQ_LOC_MESSAGE = 1;
+    static int FC_LOC_MESSAGE = 2; 
+    static int LS_BUILD_WALL = 3;
+    static int PROTECTOR_DRONE_MESSAGE = 5;
 
-	static int HQ_LOC_MESSAGE = 1;
-	static int FC_LOC_MESSAGE = 2; 
-	static int LS_BUILD_WALL = 3;
-	static int PROTECTOR_DRONE_MESSAGE = 5;
-
-
-	static int ELEVATION_LIMIT = 25;
-	static int MINER_LIMIT = 3;
-	static int VAPORATOR_LIMIT = 2;
-	static int DESIGN_LIMIT = 2;  
-	static int LANDSCAPER_LIMIT = 6;
-	static int TURN_LIMIT = 1000;
-	static int MINER_SPAWN_RATE = 1;
-	static int DIRT_LIMIT = 9;
-	static int DRONE_HOLD_LIMIT = 50;
-	static int DRONE_LIMIT = 6;
-	static int REFINERY_DIST_LIMIT = 100;
-
-	static int turnCount;
-	static int minerCount;
-	static int vaporatorCount;
-	static int designCount;
-	static int landscaperCount = 0;
-	static int droneCount = 0;
-
-	static MapLocation[] enemyHQLocs;
-	static MapLocation enemyHqLoc;
-	static MapLocation hqLoc;
-	static int hqElevation;
-	static MapLocation lastSoupMined;
-	static MapLocation depositLoc;
-	static int teamSecret = 72151689;
-	static int vaporatorSecret = 721516891;
-	static int netgunSecret = 721516892;
-	static int landscapersSecret1 = 721516893;
-	static int landscapersSecret2 = 721516894;
-	static HashMap<Direction, Direction> oppositeDirection = new HashMap<>();
-	static HashMap<Direction, Direction[]> alternateDirs = new HashMap<>();
-	static Direction last;
-	static Direction lastDesiredDir;
-	static MapLocation d; //for sensing soup
-	static Direction lastLast;
-	static boolean stop = false;
-	static boolean hasStopped = false;
-	static boolean replaceDirt = true;
-	static boolean done = false;
-
-	static MapLocation loc;
-	static MapLocation fcLoc;
+ 
+    static int ELEVATION_LIMIT = 25;
+    static int MINER_LIMIT = 3;
+    static int VAPORATOR_LIMIT = 2;
+    static int DESIGN_LIMIT = 2;  
+    static int LANDSCAPER_LIMIT = 6;
+    static int TURN_LIMIT = 1000;
+    static int MINER_SPAWN_RATE = 1;
+    static int DIRT_LIMIT = 9;
+    static int DRONE_HOLD_LIMIT = 50;
+    static int DRONE_LIMIT = 6;
+    static int REFINERY_DIST_LIMIT = 100;
+    
+    static int turnCount;
+    static int minerCount;
+    static int vaporatorCount;
+    static int designCount;
+    static int landscaperCount = 0;
+    static int droneCount = 0;
+    
+    static MapLocation[] enemyHQLocs;
+    static MapLocation enemyHqLoc;
+    static MapLocation hqLoc;
+    static int hqElevation;
+    static MapLocation lastSoupMined;
+    static MapLocation depositLoc;
+    static int teamSecret = 72151689;
+    static int vaporatorSecret = 721516891;
+    static int netgunSecret = 721516892;
+    static int landscapersSecret1 = 721516893;
+    static int landscapersSecret2 = 721516894;
+    static int offenseSecret = 72151688;
+    static HashMap<Direction, Direction> oppositeDirection = new HashMap<>();
+    static HashMap<Direction, Direction[]> alternateDirs = new HashMap<>();
+    static Direction last;
+    static Direction lastDesiredDir;
+    static MapLocation d; //for sensing soup
+    static Direction lastLast;
+    static boolean stop = false;
+    static boolean hasStopped = false;
+    static boolean replaceDirt = true;
+    static boolean done = false;
+    static boolean offensive = false;
+    static int index = 0;
+    
+    static MapLocation loc;
+    static MapLocation fcLoc;
 	static MapLocation vap1Loc;
 	static MapLocation vap2Loc;
 	static MapLocation vap3Loc;
@@ -286,480 +289,467 @@ public strictfp class RobotPlayer {
 		MapLocation loc2;
 		MapLocation loc3;
 
-		if(top > bottom && left < right) {
-			// bottom left corner
-			//	System.out.println("bottom left corner");
-			// right above
-			loc1 = new MapLocation(x, mapHeight-bottom);
-			// diagonally
-			loc2 = new MapLocation(mapWidth-left, mapHeight-bottom);
-			// to the right
-			loc3 = new MapLocation(mapWidth-left, y);
+    	if(top > bottom && left < right) {
+    		// bottom left corner
+    	//	System.out.println("bottom left corner");
+    		// right above
+    		loc1 = new MapLocation(x, mapHeight-bottom);
+    		// diagonally
+    		loc2 = new MapLocation(mapWidth-left, mapHeight-bottom);
+    		// to the right
+    		loc3 = new MapLocation(mapWidth-left, y);
 
-		}
-		else if(top < bottom && left < right) {
-			// top left corner
-			//	System.out.println("top left corner");
-			// to the right
-			loc1 = new MapLocation(mapWidth-left, y);
-			// diagonally
-			loc2 = new MapLocation(mapWidth-left, top);
-			// right below
-			loc3 = new MapLocation(x, top);
+    	}
+    	else if(top < bottom && left < right) {
+    		// top left corner
+    	//	System.out.println("top left corner");
+    		// to the right
+    		loc1 = new MapLocation(mapWidth-left, y);
+    		// diagonally
+    		loc2 = new MapLocation(mapWidth-left, top);
+    		// right below
+    		loc3 = new MapLocation(x, top);
 
 
-		}
-		else if(top < bottom && left > right) {
-			// top right corner
-			//System.out.println("top right corner");
-			// to the left
-			loc1 = new MapLocation(right, y);
-			// diagonally
-			loc2 = new MapLocation(right, top);
-			// right below
-			loc3 = new MapLocation(x, top);
-		}
-		else {
-			// bottom right corner
-			//System.out.println("bottom right corner");
-			// to the left
-			loc1 = new MapLocation(right, y);
-			// diagonally
-			loc2 = new MapLocation(right, mapHeight-bottom);
-			// right above
-			loc3 = new MapLocation(x, mapHeight-bottom);
-		}
-		System.out.println("enemy hq locs " + loc1 + " " + loc2 + " " + loc3);
-		
-		enemyHQLocs = new MapLocation[] {loc1, loc2, loc3};
-	}
+    	}
+    	else if(top < bottom && left > right) {
+    		// top right corner
+    		//System.out.println("top right corner");
+    		// to the left
+    		loc1 = new MapLocation(right, y);
+    		// diagonally
+    		loc2 = new MapLocation(right, top);
+    		// right below
+    		loc3 = new MapLocation(x, top);
+    	}
+    	else {
+    		// bottom right corner
+    		//System.out.println("bottom right corner");
+    		// to the left
+    		loc1 = new MapLocation(right, y);
+    		// diagonally
+    		loc2 = new MapLocation(right, mapHeight-bottom);
+    		// right above
+    		loc3 = new MapLocation(x, mapHeight-bottom);
+    	}
+    	
+    	enemyHQLocs = new MapLocation[] {loc1, loc2, loc3};
+    }
 
-	static void runMiner() throws GameActionException {
-		if (hqLoc == null) {
-			// search surroundings for HQ
-			RobotInfo[] robots = rc.senseNearbyRobots();
-			for(RobotInfo robot : robots) {
-				if(robot.type == RobotType.HQ && robot.team == rc.getTeam()) {
-					hqLoc = robot.location;
-					hqElevation = rc.senseElevation(hqLoc);
+    static void runMiner() throws GameActionException {
+    	if (hqLoc == null) {
+    		// search surroundings for HQ
+    		RobotInfo[] robots = rc.senseNearbyRobots();
+    		for(RobotInfo robot : robots) {
+    			if(robot.type == RobotType.HQ && robot.team == rc.getTeam()) {
+    				hqLoc = robot.location;
+    				hqElevation = rc.senseElevation(hqLoc);
+    			}
+    		}
+    	}
+    	loc = rc.getLocation();
+    	// check if miner will be building miner
+//    	if (rc.getRoundNum() == 2) {
+//    		buildingMiner = true;
+//    	}
+    	// code for building miner
+//    	System.out.println(Clock.getBytecodesLeft());
+    	if (rc.getRoundNum() == 2) {
+    		for (Transaction tx : rc.getBlock(1)) {
+    			int[] mess = tx.getMessage();
+    			if (mess[0] == teamSecret && mess[1] == offenseSecret) {
+    				offensive = true;
+    			}
+    		}
+    	}
+    	if (rc.getRoundNum() == 3 && offensive) { 
+    		buildingMiner = true;
+    	}
+    	if (offensive) {
+    		enemyHQCandidates(hqLoc);
+			Direction dirToEnemyHQ = loc.directionTo(enemyHQLocs[index]);
+			tryMove(dirToEnemyHQ);
+			if (rc.canSenseLocation(enemyHQLocs[index])) {
+				RobotInfo check = rc.senseRobotAtLocation(enemyHQLocs[index]);
+				if (check == null) {
+					index += 1;
+				} else if (check.type != RobotType.HQ) {
+					index += 1;
 				}
 			}
-		}
-		// check if miner will be building miner
-		if (rc.getRoundNum() == 2) {
-			buildingMiner = true;
-		}
-		// code for building miner
-		//    	System.out.println(Clock.getBytecodesLeft());
-		if (buildingMiner) {
-			if (ng3Built) {
-				buildingMiner = false;
-				done = true;
-			}
-			// get locations of buildings from blockchain
-			if (turnCount == 1) {
-				for (Transaction tx : rc.getBlock(1)) {
-					int[] mess = tx.getMessage();
-					if (mess[0] == teamSecret && mess[1] == FC_LOC_MESSAGE) {
-						fcLoc = new MapLocation(mess[6], mess[4]);
-					} else if (mess[0] == vaporatorSecret) {
-						vap1Loc = new MapLocation(mess[1], mess[2]);
-						vap2Loc = new MapLocation(mess[3], mess[4]);
-						vap3Loc = new MapLocation(mess[5], mess[6]);
-					} else if (mess[0] == netgunSecret) {
-						ng1Loc = new MapLocation(mess[1], mess[2]);
-						ng2Loc = new MapLocation(mess[3], mess[4]);
-						ng3Loc = new MapLocation(mess[5], mess[6]);
-					}
-				}
-			}
-			// check if drone exists
-			for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
-				int[] mess = tx.getMessage();
-				if (mess[0] == teamSecret && mess[1] == PROTECTOR_DRONE_MESSAGE) {
-					canBuild = true;
-				}
-			}
-			dsLoc = hqLoc.add(Direction.WEST).add(Direction.WEST).add(Direction.WEST);
-			// check if fulfillment center can be built and build it
-			if (!fcBuilt) {
-				adjacent = rc.getLocation().isAdjacentTo(fcLoc);
-				if (rc.getTeamSoup() >= RobotType.FULFILLMENT_CENTER.cost && !fcBuilt && adjacent) {
-					if (rc.canBuildRobot(RobotType.FULFILLMENT_CENTER, rc.getLocation().directionTo(fcLoc))) {
-						rc.buildRobot(RobotType.FULFILLMENT_CENTER, rc.getLocation().directionTo(fcLoc));
-						fcBuilt = true;
-					}
-				} else if (!adjacent) {
-					tryMove(rc.getLocation().directionTo(fcLoc));
-				}
-			}
-			// check if vaporators can be built
-			if (fcBuilt && !vap1Built && canBuild) {
-				adjacent = rc.getLocation().isAdjacentTo(vap1Loc);
-				if (rc.getTeamSoup() >= RobotType.VAPORATOR.cost && !vap1Built && adjacent) {
-					if (rc.canBuildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap1Loc))) {
-						rc.buildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap1Loc));
-						vap1Built = true;
-					}
-				} else if (!adjacent) {
-					tryMove(rc.getLocation().directionTo(vap1Loc));
-				}
-			}
-			if (vap1Built && !vap2Built) {
-				adjacent = rc.getLocation().isAdjacentTo(vap2Loc);
-				if (rc.getTeamSoup() >= RobotType.VAPORATOR.cost && !vap2Built && adjacent) {
-					if (rc.canBuildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap2Loc))) {
-						rc.buildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap2Loc));
-						vap2Built = true;
-					}
-				} else if (!adjacent) {
-					tryMove(rc.getLocation().directionTo(vap2Loc));
-				}
-			}
-			if (vap2Built && !vap3Built) {
-				adjacent = rc.getLocation().isAdjacentTo(vap3Loc);
-				if (rc.getTeamSoup() >= RobotType.VAPORATOR.cost && !vap3Built && adjacent) {
-					if (rc.canBuildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap3Loc))) {
-						rc.buildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap3Loc));
-						vap3Built = true;
-						int[] message = new int[7];
-						message[0] = teamSecret;
-						message[1] = 7;
-						if (rc.canSubmitTransaction(message, 1)) {
-							rc.submitTransaction(message, 1);
-						}
-					}
-				} else if (!adjacent) {
-					tryMove(rc.getLocation().directionTo(vap3Loc));
-				}
-			}
-			// check if design school can be built and build it
-			if (vap3Built && !dsBuilt) {
-				adjacent = rc.getLocation().isAdjacentTo(dsLoc);
-				if (rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && !dsBuilt && adjacent) {
-					if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc))) {
-						rc.buildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc));
-						dsBuilt = true;
-					}
-				} else if (!adjacent) {
-					tryMove(rc.getLocation().directionTo(dsLoc));
-				}
-			}
-			System.out.println(dsBuilt);
-			if (dsBuilt && !ng1Built) {
-				System.out.println("ran");
-				adjacent = rc.getLocation().isAdjacentTo(ng1Loc);
-				if (rc.getTeamSoup() > RobotType.NET_GUN.cost && !ng1Built && adjacent) {
-					if (rc.canBuildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng1Loc))) {
-						rc.buildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng1Loc));
-						ng1Built = true;
-						int[] message = new int[7];
-						message[0] = teamSecret;
-						message[1] = 6;
-						if (rc.canSubmitTransaction(message, 1)) {
-							rc.submitTransaction(message, 1);
-						}
-					}
-				} else if (!adjacent) {
-					System.out.println(rc.getLocation().directionTo(ng1Loc));
-					tryMove(rc.getLocation().directionTo(ng1Loc));
-				}
-			}
-			if (ng1Built && !ng2Built) {
-				adjacent = rc.getLocation().isAdjacentTo(ng2Loc);
-				if (rc.getTeamSoup() >= RobotType.NET_GUN.cost && !ng2Built && adjacent) {
-					if (rc.canBuildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng2Loc))) {
-						rc.buildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng2Loc));
-						ng2Built = true;
-					}
-				} else if (!adjacent) {
-					tryMove(rc.getLocation().directionTo(ng2Loc));
-				}
-			}
-			if (ng2Built && !ng3Built) {
-				adjacent = rc.getLocation().isAdjacentTo(ng3Loc);
-				if (rc.getTeamSoup() >= RobotType.NET_GUN.cost && !ng3Built && adjacent) {
-					if (rc.canBuildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng3Loc))) {
-						rc.buildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng3Loc));
-						ng3Built = true;
-						int[] message = new int[7];
-						message[0] = teamSecret;
-						message[1] = LS_BUILD_WALL;
-						if (rc.canSubmitTransaction(message, 1)) {
-							rc.submitTransaction(message, 1);
-						}
-					}
-				} else if (!adjacent) {
-					tryMove(rc.getLocation().directionTo(ng3Loc));
-				}
-			}
-		}
-		// code for normal miners
-		else {
-			if(turnCount == 1) {
-				int radius = (int) Math.sqrt(RobotType.MINER.sensorRadiusSquared);
-				MapLocation curLoc = rc.getLocation();
-				int maxSoup = 0;
-				for(int i=-radius-1; i < radius+1; i++) {
-					for(int j=-radius-1; j < radius+1;j++) {
-						MapLocation loc = new MapLocation(curLoc.x+i, curLoc.y+j);
-						if(rc.canSenseLocation(loc) && rc.senseSoup(loc) > maxSoup) {
-							maxSoup = rc.senseSoup(loc);
-							System.out.println("Soup found at : " + loc +  "soupAmt: " + maxSoup);
-							lastSoupMined = loc;
-							break;
-						}
-					}
-				}
-			}
-			for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
-				int[] mess = tx.getMessage();
-				if (mess[0] == teamSecret && mess[1] == 7) {
-					done = true;
-				}
-			}
-			if (done) {
-				enemyHQCandidates(hqLoc);
-				Direction dirToEnemyHQ = rc.getLocation().directionTo(enemyHQLocs[0]);
-				tryMove(dirToEnemyHQ);
-			}
-			//    		System.out.println(Clock.getBytecodesLeft());
-			loc = rc.getLocation();
-			// tries to refine soup all around it
-			for (Direction dir : directions) {
-				if (tryRefine(dir)) {
-					//              System.out.println("I refined soup! " + rc.getTeamSoup());
-				}
-			}
-			// tries to mine all around it
-			for (Direction dir : directions) {
-				if (tryMine(dir)) {
-					lastSoupMined = loc.add(dir);
-					//              System.out.println("I mined soup! " + rc.getSoupCarrying());
-				}
-			}
-			// go drop off soup at hq
-			if (rc.getSoupCarrying() == rc.getType().soupLimit) {
-				//        	System.out.println("at the soup limit: " + rc.getSoupCarrying());
-				// time to go back to HQ
-				int distToHQ = rc.getLocation().distanceSquaredTo(hqLoc);
-				if(distToHQ <= REFINERY_DIST_LIMIT) {
-					Direction dirToHQ = loc.directionTo(hqLoc);
-					if(tryMove(dirToHQ)) {
-						//	        		System.out.println("moved towards HQ");
-						//		        	System.out.println("moved to: " + rc.getLocation());
-					}
-				}
-				else {
-					RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, rc.getTeam());
-					boolean refineryBuilt = false;
-					for(RobotInfo rob: nearbyRobots) {
-						if(rob.getType() == RobotType.REFINERY) {
-							refineryBuilt = true;
-							hqLoc = rob.getLocation();
-						}
-					}
-					if(!refineryBuilt) {
-						for(Direction dir: directions) {
-							if(rc.canBuildRobot(RobotType.REFINERY, dir) && rc.getTeamSoup() > RobotType.REFINERY.cost) {
-								rc.buildRobot(RobotType.REFINERY, dir);
-								hqLoc = rc.getLocation().add(dir);
-							}
-						}
-					}
-				}
-			}
-			// move towards last soup mined
-			if (lastSoupMined != null && rc.getSoupCarrying() == 0) {
-				Direction dirToSoup = loc.directionTo(lastSoupMined);
-				if (dirToSoup == Direction.CENTER) {
-					//	    			System.out.println("ran");
-					lastSoupMined = null;
-				} else {
-					if (tryMove(dirToSoup)) {
-						System.out.println("moved towards last soup");
-					}
-				}
-			}
-			// sense for soup
-			for (Direction dir : directions) {
-				if (dir == Direction.NORTH) {
-					d = loc.add(dir).add(dir);
-					if (rc.canSenseLocation(d)) {
-						if (rc.senseSoup(d) > 0) {
-							tryMove(dir);
-						}
-					}
-				} else if (dir == Direction.NORTHEAST) {
-					d = loc.add(dir).add(dir);
-					if (rc.canSenseLocation(d)) {
-						if (rc.senseSoup(d) > 0) {
-							tryMove(dir);
-						}
-					} 
-					d = loc.add(dir).add(Direction.NORTH);
-					if (rc.canSenseLocation(d)) {
-						if (rc.senseSoup(d) > 0) {
-							tryMove(dir);
-						}
-					} 
-					d = loc.add(dir).add(Direction.EAST);
-					if (rc.canSenseLocation(d)) {
-						if (rc.senseSoup(d) > 0) {
-							tryMove(dir);
-						}
-					}
-				} else if (dir == Direction.EAST) {
-					d = loc.add(dir).add(dir);
-					if (rc.canSenseLocation(d)) {
-						if (rc.senseSoup(d) > 0) {
-							tryMove(dir);
-						}
-					}
-				} else if (dir == Direction.SOUTHEAST) {
-					d = loc.add(dir).add(dir);
-					if (rc.canSenseLocation(d)) {
-						if (rc.senseSoup(d) > 0) {
-							tryMove(dir);
-						}
-					} 
-					d = loc.add(dir).add(Direction.SOUTH);
-					if (rc.canSenseLocation(d)) {
-						if (rc.senseSoup(d) > 0) {
-							tryMove(dir);
-						}
-					}
-					d = loc.add(dir).add(Direction.EAST);
-					if (rc.canSenseLocation(d)) {
-						if (rc.senseSoup(d) > 0) {
-							tryMove(dir);
-						}
-					}
-				} else if (dir == Direction.SOUTH) {
-					d = loc.add(dir).add(dir);
-					if (rc.canSenseLocation(d)) {
-						if (rc.senseSoup(d) > 0) {
-							tryMove(dir);
-						}
-					}
-				} else if (dir == Direction.SOUTHWEST) {
-					d = loc.add(dir).add(dir);
-					if (rc.canSenseLocation(d)) {
-						if (rc.senseSoup(d) > 0) {
-							tryMove(dir);
-						}
-					}
-					d = loc.add(dir).add(Direction.SOUTH);
-					if (rc.canSenseLocation(d)) {
-						if (rc.senseSoup(d) > 0) {
-							tryMove(dir);
-						}
-					}
-					d = loc.add(dir).add(Direction.WEST);
-					if (rc.canSenseLocation(d)) {
-						if (rc.senseSoup(d) > 0) {
-							tryMove(dir);
-						}
-					}
-				} else if (dir == Direction.WEST) {
-					d = loc.add(dir).add(dir);
-					if (rc.canSenseLocation(d)) {
-						if (rc.senseSoup(d) > 0) {
-							tryMove(dir);
-						}
-					}
-				} else if (dir == Direction.NORTHWEST) {
-					d = loc.add(dir).add(dir);
-					if (rc.canSenseLocation(d)) {
-						if (rc.senseSoup(d) > 0) {
-							tryMove(dir);
-						}
-					}
-					d = loc.add(dir).add(Direction.NORTH);
-					if (rc.canSenseLocation(d)) {
-						if (rc.senseSoup(d) > 0) {
-							tryMove(dir);
-						}
-					}
-					d = loc.add(dir).add(Direction.WEST);
-					if (rc.canSenseLocation(d)) {
-						if (rc.senseSoup(d) > 0) {
-							tryMove(dir);
-						}
-					}
-				}
-			}
-			if (Math.abs(GameConstants.getWaterLevel(rc.getRoundNum()) - rc.senseElevation(loc)) <= 0.5) {
+			if (loc.isAdjacentTo(enemyHQLocs[index])) {
 				for (Direction dir : directions) {
-					if (rc.canSenseLocation(loc.add(dir))) {
-						if (rc.senseElevation(loc.add(dir)) > rc.senseElevation(loc)) {
-							tryMove(dir);
-						}
+					if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, dir)) {
+						rc.buildRobot(RobotType.DESIGN_SCHOOL, dir);
+						offensive = false;
 					}
 				}
 			}
-			// move in a random direction
-			searchSoup();
-			if(lastSoupMined != null) {
-				Direction dirToSoup = loc.directionTo(lastSoupMined);
-				if (dirToSoup == Direction.CENTER) {
-					//	    			System.out.println("ran");
-					lastSoupMined = null;
-				} else {
-					if (tryMove(dirToSoup)) {
-						System.out.println("moved towards last soup");
-					}
-				}
+    	}
 
-			}
-			tryMove(randomDirection(last));
-		}
-	}
+    	if (buildingMiner) {
+    		if (ng3Built) {
+    			buildingMiner = false;
+    			done = true;
+    		}
+    		// get locations of buildings from blockchain
+    		if (turnCount == 1) {
+        		for (Transaction tx : rc.getBlock(1)) {
+        			int[] mess = tx.getMessage();
+        			if (mess[0] == teamSecret && mess[1] == FC_LOC_MESSAGE) {
+        				fcLoc = new MapLocation(mess[6], mess[4]);
+        			} else if (mess[0] == netgunSecret) {
+        				ng1Loc = new MapLocation(mess[1], mess[2]);
+        				ng2Loc = new MapLocation(mess[3], mess[4]);
+        				ng3Loc = new MapLocation(mess[5], mess[6]);
+        			}
+        		}
+        	}
+    		// check if drone exists
+    		for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+    			int[] mess = tx.getMessage();
+    			if (mess[0] == teamSecret && mess[1] == PROTECTOR_DRONE_MESSAGE) {
+    				canBuild = true;
+    			}
+    		}
+        	dsLoc = hqLoc.add(Direction.WEST).add(Direction.WEST).add(Direction.WEST);
+    		// check if fulfillment center can be built and build it
+        	if (!fcBuilt) {
+        		adjacent = rc.getLocation().isAdjacentTo(fcLoc);
+	    		if (rc.getTeamSoup() >= RobotType.FULFILLMENT_CENTER.cost && !fcBuilt && adjacent) {
+	    			if (rc.canBuildRobot(RobotType.FULFILLMENT_CENTER, rc.getLocation().directionTo(fcLoc))) {
+	    				rc.buildRobot(RobotType.FULFILLMENT_CENTER, rc.getLocation().directionTo(fcLoc));
+	    				fcBuilt = true;
+	    			}
+	    		} else if (!adjacent) {
+	    			tryMove(rc.getLocation().directionTo(fcLoc));
+	    		}
+        	}
+    		// check if vaporators can be built
+    		if (fcBuilt && canBuild) {
+    			adjacent = rc.getLocation().isAdjacentTo(dsLoc);
+    			if (rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && !dsBuilt && adjacent) {
+    				if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc))) {
+    					rc.buildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc));
+    					dsBuilt = true;
+    				}
+    			} else if (!adjacent) {
+    				tryMove(rc.getLocation().directionTo(dsLoc));
+    			}
+    		}
+    		if (dsBuilt && !ng1Built) {
+    			System.out.println("ran");
+    			adjacent = rc.getLocation().isAdjacentTo(ng1Loc);
+    			if (rc.getTeamSoup() > RobotType.NET_GUN.cost && !ng1Built && adjacent) {
+    				if (rc.canBuildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng1Loc))) {
+    					rc.buildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng1Loc));
+    					ng1Built = true;
+    					int[] message = new int[7];
+    		        	message[0] = teamSecret;
+    		        	message[1] = 6;
+    		        	if (rc.canSubmitTransaction(message, 1)) {
+    		        		rc.submitTransaction(message, 1);
+    		        	}
+    				}
+    			} else if (!adjacent) {
+    				System.out.println(rc.getLocation().directionTo(ng1Loc));
+    				tryMove(rc.getLocation().directionTo(ng1Loc));
+    			}
+    		}
+    		if (ng1Built && !ng2Built) {
+    			adjacent = rc.getLocation().isAdjacentTo(ng2Loc);
+    			if (rc.getTeamSoup() >= RobotType.NET_GUN.cost && !ng2Built && adjacent) {
+    				if (rc.canBuildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng2Loc))) {
+    					rc.buildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng2Loc));
+    					ng2Built = true;
+    				}
+    			} else if (!adjacent) {
+    				tryMove(rc.getLocation().directionTo(ng2Loc));
+    			}
+    		}
+    		if (ng2Built && !ng3Built) {
+    			adjacent = rc.getLocation().isAdjacentTo(ng3Loc);
+    			if (rc.getTeamSoup() >= RobotType.NET_GUN.cost && !ng3Built && adjacent) {
+    				if (rc.canBuildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng3Loc))) {
+    					rc.buildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng3Loc));
+    					ng3Built = true;
+    					int[] message = new int[7];
+            	    	message[0] = teamSecret;
+            	    	message[1] = LS_BUILD_WALL;
+                    	if (rc.canSubmitTransaction(message, 1)) {
+                    		rc.submitTransaction(message, 1);
+                    	}
+    				}
+    			} else if (!adjacent) {
+    				tryMove(rc.getLocation().directionTo(ng3Loc));
+    			}
+    		}
+    	}
+    	// code for normal miners
+    	else {
+    		if(turnCount == 1) {
+    			int radius = (int) Math.sqrt(RobotType.MINER.sensorRadiusSquared);
+    			MapLocation curLoc = rc.getLocation();
+    			int maxSoup = 0;
+    			for(int i=-radius-1; i < radius+1; i++) {
+    				for(int j=-radius-1; j < radius+1;j++) {
+    					MapLocation loc = new MapLocation(curLoc.x+i, curLoc.y+j);
+    					if(rc.canSenseLocation(loc) && rc.senseSoup(loc) > maxSoup) {
+    						maxSoup = rc.senseSoup(loc);
+    						System.out.println("Soup found at : " + loc +  "soupAmt: " + maxSoup);
+    						lastSoupMined = loc;
+    						break;
+    					}
+    				}
+    			}
+    		}
+    		for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+    			int[] mess = tx.getMessage();
+    			if (mess[0] == teamSecret && mess[1] == 7) {
+    				done = true;
+    			}
+    		}
+    		if (done) {
+    			enemyHQCandidates(hqLoc);
+    			Direction dirToEnemyHQ = rc.getLocation().directionTo(enemyHQLocs[0]);
+    			tryMove(dirToEnemyHQ);
+    		}
+//    		System.out.println(Clock.getBytecodesLeft());
+    		loc = rc.getLocation();
+	    	// tries to refine soup all around it
+	        for (Direction dir : directions) {
+	            if (tryRefine(dir)) {
+//              System.out.println("I refined soup! " + rc.getTeamSoup());
+	            }
+	        }
+	        // tries to mine all around it
+	        for (Direction dir : directions) {
+	            if (tryMine(dir)) {
+	            	lastSoupMined = loc.add(dir);
+//              System.out.println("I mined soup! " + rc.getSoupCarrying());
+	            }
+	        }
+	        // go drop off soup at hq
+	        if (rc.getSoupCarrying() == rc.getType().soupLimit) {
+//        	System.out.println("at the soup limit: " + rc.getSoupCarrying());
+	        	// time to go back to HQ
+	        	int distToHQ = rc.getLocation().distanceSquaredTo(hqLoc);
+	        	if(distToHQ <= REFINERY_DIST_LIMIT) {
+		        	Direction dirToHQ = loc.directionTo(hqLoc);
+		        	if(tryMove(dirToHQ)) {
+//	        		System.out.println("moved towards HQ");
+//		        	System.out.println("moved to: " + rc.getLocation());
+		        	}
+	        	}
+	        	else {
+	        		RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, rc.getTeam());
+	        		boolean refineryBuilt = false;
+	        		for(RobotInfo rob: nearbyRobots) {
+	        			if(rob.getType() == RobotType.REFINERY) {
+	        				refineryBuilt = true;
+	        				hqLoc = rob.getLocation();
+	        			}
+	        		}
+	        		if(!refineryBuilt) {
+	        			for(Direction dir: directions) {
+	        				if(rc.canBuildRobot(RobotType.REFINERY, dir) && rc.getTeamSoup() > RobotType.REFINERY.cost) {
+	        					rc.buildRobot(RobotType.REFINERY, dir);
+	        					hqLoc = rc.getLocation().add(dir);
+	        				}
+	        			}
+	        		}
+	        	}
+	        }
+	    	// move towards last soup mined
+	    	if (lastSoupMined != null && rc.getSoupCarrying() == 0) {
+	    		Direction dirToSoup = loc.directionTo(lastSoupMined);
+	    		if (dirToSoup == Direction.CENTER) {
+//	    			System.out.println("ran");
+	        		lastSoupMined = null;
+	        	} else {
+		        	if (tryMove(dirToSoup)) {
+		        	System.out.println("moved towards last soup");
+		        	}
+	        	}
+	        }
+	    	// sense for soup
+	    	for (Direction dir : directions) {
+	    		if (dir == Direction.NORTH) {
+	    			d = loc.add(dir).add(dir);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    		} else if (dir == Direction.NORTHEAST) {
+	    			d = loc.add(dir).add(dir);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			} 
+	    			d = loc.add(dir).add(Direction.NORTH);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			} 
+	    			d = loc.add(dir).add(Direction.EAST);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    		} else if (dir == Direction.EAST) {
+	    			d = loc.add(dir).add(dir);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    		} else if (dir == Direction.SOUTHEAST) {
+	    			d = loc.add(dir).add(dir);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			} 
+	    			d = loc.add(dir).add(Direction.SOUTH);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    			d = loc.add(dir).add(Direction.EAST);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    		} else if (dir == Direction.SOUTH) {
+	    			d = loc.add(dir).add(dir);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    		} else if (dir == Direction.SOUTHWEST) {
+	    			d = loc.add(dir).add(dir);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    			d = loc.add(dir).add(Direction.SOUTH);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    			d = loc.add(dir).add(Direction.WEST);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    		} else if (dir == Direction.WEST) {
+	    			d = loc.add(dir).add(dir);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    		} else if (dir == Direction.NORTHWEST) {
+	    			d = loc.add(dir).add(dir);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    			d = loc.add(dir).add(Direction.NORTH);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    			d = loc.add(dir).add(Direction.WEST);
+	    			if (rc.canSenseLocation(d)) {
+	    				if (rc.senseSoup(d) > 0) {
+	    					tryMove(dir);
+	    				}
+	    			}
+	    		}
+	    	}
+	    	if (Math.abs(GameConstants.getWaterLevel(rc.getRoundNum()) - rc.senseElevation(loc)) <= 0.5) {
+	    		for (Direction dir : directions) {
+	    			if (rc.canSenseLocation(loc.add(dir))) {
+		    			if (rc.senseElevation(loc.add(dir)) > rc.senseElevation(loc)) {
+		    				tryMove(dir);
+		    			}
+	    			}
+	    		}
+	    	}
+	    	// move in a random direction
+	    	if(lastSoupMined != null) {
+	    		Direction dirToSoup = loc.directionTo(lastSoupMined);
+	    		if (dirToSoup == Direction.CENTER) {
+//	    			System.out.println("ran");
+	        		lastSoupMined = null;
+	        	} else {
+		        	if (tryMove(dirToSoup)) {
+		        	System.out.println("moved towards last soup");
+		        	}
+	        	}
+	    		
+	    	}
+	        tryMove(randomDirection(last));
+    	}
+    }
+    
+    
+//    static void searchSoup() throws GameActionException {
+//    	if(rc.isReady()) {
+//			int radius = (int) Math.sqrt(RobotType.MINER.sensorRadiusSquared);
+//			MapLocation curLoc = rc.getLocation();
+//			int maxSoup = 0;
+//			for(int i=-radius-1; i < radius+1; i++) {
+//				for(int j=-radius-1; j < radius+1;j++) {
+//					MapLocation loc = new MapLocation(curLoc.x+i, curLoc.y+j);
+//					if(rc.canSenseLocation(loc) && rc.senseSoup(loc) > maxSoup) {
+//						maxSoup = rc.senseSoup(loc);
+//						System.out.println("Soup found at : " + loc +  "soupAmt: " + maxSoup);
+//						lastSoupMined = loc;
+//						break;
+//					}
+//				}
+//			}
+//    	}
+//    }
 
+    static void runRefinery() throws GameActionException {
+        // System.out.println("Pollution: " + rc.sensePollution(rc.getLocation()));
+    }
 
-	static void searchSoup() throws GameActionException {
-		if(rc.isReady()) {
-			int radius = (int) Math.sqrt(RobotType.MINER.sensorRadiusSquared);
-			MapLocation curLoc = rc.getLocation();
-			int maxSoup = 0;
-			for(int i=-radius-1; i < radius+1; i++) {
-				for(int j=-radius-1; j < radius+1;j++) {
-					MapLocation loc = new MapLocation(curLoc.x+i, curLoc.y+j);
-					if(rc.canSenseLocation(loc) && rc.senseSoup(loc) > maxSoup) {
-						maxSoup = rc.senseSoup(loc);
-						System.out.println("Soup found at : " + loc +  "soupAmt: " + maxSoup);
-						lastSoupMined = loc;
-						break;
-					}
-				}
-			}
-		}
-	}
+    static void runVaporator() throws GameActionException {
 
-	static void runRefinery() throws GameActionException {
-		// System.out.println("Pollution: " + rc.sensePollution(rc.getLocation()));
-	}
+    }
 
-	static void runVaporator() throws GameActionException {
-
-	}
-
-	static void runDesignSchool() throws GameActionException {
-		if (turnCount == 1) {
-			for (Transaction tx : rc.getBlock(1)) {
-				int[] mess = tx.getMessage();
-				if (mess[0] == landscapersSecret1) {
-					lsLoc[1] = new MapLocation(mess[1], mess[2]);
-					lsLoc[2] = new MapLocation(mess[3], mess[4]);
-					lsLoc[3] = new MapLocation(mess[5], mess[6]);
-				} else if (mess[0] == landscapersSecret2) {
-					lsLoc[4] = new MapLocation(mess[1], mess[2]);
-					lsLoc[5] = new MapLocation(mess[3], mess[4]);
-					lsLoc[6] = new MapLocation(mess[5], mess[6]);
-				} 
-			}
-		}
-		for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+    static void runDesignSchool() throws GameActionException {
+    	if (turnCount == 1) {
+    		for (Transaction tx : rc.getBlock(1)) {
+    			int[] mess = tx.getMessage();
+    			if (mess[0] == landscapersSecret1) {
+    				lsLoc[1] = new MapLocation(mess[1], mess[2]);
+    				lsLoc[2] = new MapLocation(mess[3], mess[4]);
+    				lsLoc[3] = new MapLocation(mess[5], mess[6]);
+    			} else if (mess[0] == landscapersSecret2) {
+    				lsLoc[4] = new MapLocation(mess[1], mess[2]);
+    				lsLoc[5] = new MapLocation(mess[3], mess[4]);
+    				lsLoc[6] = new MapLocation(mess[5], mess[6]);
+    			} 
+    		}
+    	}
+    	for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
 			int[] mess = tx.getMessage();
 			if (mess[0] == teamSecret && mess[1] == 6) {
 				canBuild = true;
