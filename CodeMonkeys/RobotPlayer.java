@@ -30,6 +30,7 @@ public strictfp class RobotPlayer {
     static int FC_LOC_MESSAGE = 2; 
     static int LS_BUILD_WALL = 3;
     static int PROTECTOR_DRONE_MESSAGE = 5;
+    static int FC_MINER_MESSAGE = 7;
 
  
     static int ELEVATION_LIMIT = 25;
@@ -91,6 +92,7 @@ public strictfp class RobotPlayer {
 
 	static boolean buildingMiner = false;
 	static boolean protectorDrone = false;
+	static boolean droneAttack = false;
 	static int lsID;
 	static int enemyHQIndex = 0;
 
@@ -237,24 +239,24 @@ public strictfp class RobotPlayer {
 		            	
 		            	int[] lsCoords1 = new int[7];
 		            	lsCoords1[0] = landscapersSecret1;
-		            	lsCoords1[1] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).x;
-		            	lsCoords1[2] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).y;
-		            	lsCoords1[3] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).x;
-		            	lsCoords1[4] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).y;
-		            	lsCoords1[5] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).x;
-		            	lsCoords1[6] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).y;
+		            	lsCoords1[3] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).x;
+		            	lsCoords1[4] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).y;
+		            	lsCoords1[5] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).x;
+		            	lsCoords1[6] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).y;
+		            	lsCoords1[1] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).x;
+		            	lsCoords1[2] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).y;
 		            	if (rc.canSubmitTransaction(lsCoords1, 1)) {
 		            		rc.submitTransaction(lsCoords1, 1);
 		            	}
 		            	
 		            	int[] lsCoords2 = new int[7];
 		            	lsCoords2[0] = landscapersSecret2;
-		            	lsCoords2[1] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).x;
-		            	lsCoords2[2] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).y;
-		            	lsCoords2[3] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).x;
-		            	lsCoords2[4] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).y;
-		            	lsCoords2[5] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).x;
-		            	lsCoords2[6] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).y;
+		            	lsCoords2[3] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).x;
+		            	lsCoords2[4] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).y;
+		            	lsCoords2[5] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).x;
+		            	lsCoords2[6] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).y;
+		            	lsCoords2[1] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).x;
+		            	lsCoords2[2] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).y;
 		            	if (rc.canSubmitTransaction(lsCoords2, 1)) {
 		            		rc.submitTransaction(lsCoords2, 1);
 		            	}
@@ -283,6 +285,20 @@ public strictfp class RobotPlayer {
             	}
     		}
     	}
+    	//using the hq as a net gun
+		if(rc.isReady()) {
+			Team enemy = rc.getTeam().opponent();
+			RobotInfo[] nearbyBots = rc.senseNearbyRobots(RobotType.NET_GUN.sensorRadiusSquared, enemy);
+			if(nearbyBots.length > 0) {
+				for(RobotInfo rob: nearbyBots) {
+					if(rob.type == RobotType.DELIVERY_DRONE) {
+						if(rc.canShootUnit(rob.getID())) {
+							rc.shootUnit(rob.getID());
+						}
+					}
+				}
+			}
+		}
     }
     
 	static void enemyHQCandidates(MapLocation hqLoc){
@@ -373,6 +389,9 @@ public strictfp class RobotPlayer {
     			if (mess[0] == teamSecret && mess[1] == offenseSecret) {
     				offensive = true;
     			}
+    			else {
+    				buildingMiner = true;
+    			}
     		}
     	}
 //    	if (rc.getRoundNum() == 3 && !offensive) { 
@@ -383,10 +402,28 @@ public strictfp class RobotPlayer {
     			enemyHQCandidates(hqLoc);
     		}
 			Direction dirToEnemyHQ = loc.directionTo(enemyHQLocs[index]);
+			
+			MapLocation[] senseFloodings = {loc.add(dirToEnemyHQ), loc.add(dirToEnemyHQ).add(dirToEnemyHQ), loc.add(dirToEnemyHQ)};
+			boolean buildFC = false;
+			
+			for(MapLocation mapLoc: senseFloodings) {
+				buildFC = buildFC && rc.senseFlooding(mapLoc);
+			}
+			
+			if(buildFC) {
+				for(Direction dir: directions) {
+					if(rc.canBuildRobot(RobotType.FULFILLMENT_CENTER, dir)) {
+						rc.buildRobot(RobotType.FULFILLMENT_CENTER, dir);
+					}
+					int[] transaction = new int[7];
+				}
+			}
+			
 			System.out.println(enemyHQLocs[0]);
 			System.out.println(enemyHQLocs[1]);
 			System.out.println(enemyHQLocs[2]);
 			System.out.println(enemyHQLocs[index]);
+			
 			tryMove(dirToEnemyHQ);
 			if (rc.canSenseLocation(enemyHQLocs[index])) {
 				RobotInfo check = rc.senseRobotAtLocation(enemyHQLocs[index]);
@@ -799,8 +836,18 @@ public strictfp class RobotPlayer {
 	}
 
 	static void runFulfillmentCenter() throws GameActionException {
+		
+		Transaction[] transactions = rc.getBlock(rc.getRoundNum()-1);
+		for(Transaction tx: transactions) {
+			int[] message = tx.getMessage();
+			if(message[0] == LS_BUILD_WALL) {
+				droneAttack = true;
+			}
+		}
+		
+		
 		for (Direction dir : directions) {
-			if (droneCount < DRONE_LIMIT && rc.getTeamSoup() > RobotType.DELIVERY_DRONE.cost) {
+			if ((droneCount < 1|| droneAttack) && rc.getTeamSoup() > RobotType.DELIVERY_DRONE.cost){
 				if (tryBuild(RobotType.DELIVERY_DRONE, dir)) {
 					if(droneCount == 0) {
 						int[] message = new int[7];
@@ -838,28 +885,28 @@ public strictfp class RobotPlayer {
 					lsID = mess[3];
 					if (mess[3] <= 3) {
 						behind = Direction.NORTH;
-					} else if (mess[3] == 4) {
-						behind = Direction.SOUTH;
 					} else if (mess[3] == 5) {
-						behind = Direction.SOUTHWEST;
+						behind = Direction.SOUTH;
 					} else if (mess[3] == 6) {
+						behind = Direction.SOUTHWEST;
+					} else if (mess[3] == 4) {
 						behind = Direction.EAST;
 					}
 				}
 			}
-			if (lsID == 1 || lsID == 4) {
+			if (lsID == 2 || lsID == 5) {
 				placeDirt[0] = Direction.CENTER;
 				placeDirt[1] = Direction.WEST;
 				placeDirt[2] = Direction.EAST;
-			} else if (lsID == 5 || lsID == 6) {
+			} else if (lsID == 4 || lsID == 6) {
 				placeDirt[0] = Direction.CENTER;
 				placeDirt[1] = Direction.NORTH;
 				placeDirt[2] = Direction.SOUTH;
-			} else if (lsID == 2) {
+			} else if (lsID == 3) {
 				placeDirt[0] = Direction.CENTER;
 				placeDirt[1] = Direction.EAST;
 				placeDirt[2] = Direction.SOUTH;
-			} else if (lsID == 3) {
+			} else if (lsID == 1) {
 				placeDirt[0] = Direction.CENTER;
 				placeDirt[1] = Direction.WEST;
 				placeDirt[2] = Direction.SOUTH;
@@ -943,6 +990,14 @@ public strictfp class RobotPlayer {
 			tryMove(dirToDroneLoc);
 			}
 		else if(!protectorDrone && rc.isReady()) {
+			if(rc.canSenseLocation(hqLoc)) {
+				RobotInfo[] nearbyMiners = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, rc.getTeam());
+				for(RobotInfo r: nearbyMiners) {
+					if(rc.canPickUpUnit(r.ID)&& r.type == RobotType.MINER) {
+						rc.pickUpUnit(r.ID);
+					}
+				}
+			}
 			if(enemyHQLocs == null) {
 				enemyHQCandidates(hqLoc);
 			}
@@ -1023,7 +1078,6 @@ public strictfp class RobotPlayer {
 						approachToRobot = r;
 					}
 				}
-
 				if(approachToRobot != null) {
 					Direction dirToEnemy = curLoc.directionTo(approachToRobot.location);
 					System.out.println(dirToEnemy);
@@ -1031,30 +1085,10 @@ public strictfp class RobotPlayer {
 				}
 			}
 		else if(rc.isReady()) {
-			droneHoldingFor += 1;
-			if(droneHoldingFor >= DRONE_HOLD_LIMIT) {
-				int height = rc.getMapHeight();
-				int width = rc.getMapWidth();
-				MapLocation loc1 = new MapLocation(0, 0);
-				MapLocation loc2 = new MapLocation(0, height);
-				MapLocation loc3 = new MapLocation(width, 0);
-				MapLocation loc4 = new MapLocation(width, height);
-				MapLocation[] corners = {loc1, loc2, loc3, loc4};
-				MapLocation closest = null;
-				int minDist = Integer.MAX_VALUE;
-				for(MapLocation corner: corners) {
-					int dist = rc.getLocation().distanceSquaredTo(corner);
-					if(dist < minDist) {
-						closest = corner;
-					}
-				}
-				waterLoc = closest;
-
-			}
-
 			System.out.println("currently carrying a unit");
-			if(waterLoc != null && !curLoc.equals(waterLoc) && !rc.senseFlooding(curLoc)) {
+			if(waterLoc != null && !curLoc.equals(waterLoc) && !rc.senseFlooding(curLoc) && !curLoc.isAdjacentTo(waterLoc)) {
 				Direction dirToWater = curLoc.directionTo(waterLoc);
+				System.out.println("trying to move to whhere i can sense water");
 				tryMove(dirToWater);
 			}
 
@@ -1068,123 +1102,14 @@ public strictfp class RobotPlayer {
 				}
 			}
 			
-			searchFlooding();
+			if(waterLoc == null) {
+				searchFlooding();
+			}
 
 			if(waterLoc != null) {
 				Direction dirToWater = curLoc.directionTo(waterLoc);
 				tryMove(dirToWater);
 			}
-			
-
-//			System.out.println("carrying a unit");
-//			loc = rc.getLocation();
-//			for (Direction dir : directions) {
-//				if (dir == Direction.NORTH) {
-//					d = loc.add(dir).add(dir);
-//					if (rc.canSenseLocation(d)) {
-//						if (rc.senseFlooding(d)) {
-//							tryMove(dir);
-//						}
-//					}
-//				} else if (dir == Direction.NORTHEAST) {
-//					d = loc.add(dir).add(dir);
-//					if (rc.canSenseLocation(d)) {
-//						if (rc.senseFlooding(d)) {
-//							tryMove(dir);
-//						}
-//					} 
-//					d = loc.add(dir).add(Direction.NORTH);
-//					if (rc.canSenseLocation(d)) {
-//						if (rc.senseFlooding(d)) {
-//							tryMove(dir);
-//						}
-//					} 
-//					d = loc.add(dir).add(Direction.EAST);
-//					if (rc.canSenseLocation(d)) {
-//						if (rc.senseFlooding(d)) {
-//							tryMove(dir);
-//						}
-//					}
-//				} else if (dir == Direction.EAST) {
-//					d = loc.add(dir).add(dir);
-//					if (rc.canSenseLocation(d)) {
-//						if (rc.senseFlooding(d)) {
-//							tryMove(dir);
-//						}
-//					}
-//				} else if (dir == Direction.SOUTHEAST) {
-//					d = loc.add(dir).add(dir);
-//					if (rc.canSenseLocation(d)) {
-//						if (rc.senseFlooding(d)) {
-//							tryMove(dir);
-//						}
-//					} 
-//					d = loc.add(dir).add(Direction.SOUTH);
-//					if (rc.canSenseLocation(d)) {
-//						if (rc.senseFlooding(d)) {
-//							tryMove(dir);
-//						}
-//					}
-//					d = loc.add(dir).add(Direction.EAST);
-//					if (rc.canSenseLocation(d)) {
-//						if (rc.senseFlooding(d)) {
-//							tryMove(dir);
-//						}
-//					}
-//				} else if (dir == Direction.SOUTH) {
-//					d = loc.add(dir).add(dir);
-//					if (rc.canSenseLocation(d)) {
-//						if (rc.senseFlooding(d)) {
-//							tryMove(dir);
-//						}
-//					}
-//				} else if (dir == Direction.SOUTHWEST) {
-//					d = loc.add(dir).add(dir);
-//					if (rc.canSenseLocation(d)) {
-//						if (rc.senseFlooding(d)) {
-//							tryMove(dir);
-//						}
-//					}
-//					d = loc.add(dir).add(Direction.SOUTH);
-//					if (rc.canSenseLocation(d)) {
-//						if (rc.senseFlooding(d)) {
-//							tryMove(dir);
-//						}
-//					}
-//					d = loc.add(dir).add(Direction.WEST);
-//					if (rc.canSenseLocation(d)) {
-//						if (rc.senseFlooding(d)) {
-//							tryMove(dir);
-//						}
-//					}
-//				} else if (dir == Direction.WEST) {
-//					d = loc.add(dir).add(dir);
-//					if (rc.canSenseLocation(d)) {
-//						if (rc.senseFlooding(d)) {
-//							tryMove(dir);
-//						}
-//					}
-//				} else if (dir == Direction.NORTHWEST) {
-//					d = loc.add(dir).add(dir);
-//					if (rc.canSenseLocation(d)) {
-//						if (rc.senseFlooding(d)) {
-//							tryMove(dir);
-//						}
-//					}
-//					d = loc.add(dir).add(Direction.NORTH);
-//					if (rc.canSenseLocation(d)) {
-//						if (rc.senseFlooding(d)) {
-//							tryMove(dir);
-//						}
-//					}
-//					d = loc.add(dir).add(Direction.WEST);
-//					if (rc.canSenseLocation(d)) {
-//						if (rc.senseFlooding(d)) {
-//							tryMove(dir);
-//						}
-//					}
-//				}
-//			}
 			tryMove(randomDirection(last));
 		}
 		
