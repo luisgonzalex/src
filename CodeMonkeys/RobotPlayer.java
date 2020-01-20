@@ -206,63 +206,75 @@ public strictfp class RobotPlayer {
     	}
     	if (rc.getRoundNum() == 1) {
     		if (rc.onTheMap(rc.getLocation().add(Direction.NORTH).add(Direction.NORTH)) && rc.onTheMap(rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST)) && rc.onTheMap(rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST)) && rc.onTheMap(rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH)) && rc.onTheMap(rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST)) && rc.onTheMap(rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST))) {
-    			int[] hqCoords = new int[7];
-    	    	hqCoords[0] = teamSecret;
-    	    	hqCoords[1] = 1;
-    	    	hqCoords[6] = rc.getLocation().x;
-    	    	hqCoords[4] = rc.getLocation().y;
-            	if (rc.canSubmitTransaction(hqCoords, 1)) {
-            		rc.submitTransaction(hqCoords, 1);
-            	}
-            	
-            	int[] fcCoords = new int[7];
-            	fcCoords[0] = teamSecret;
-            	fcCoords[1] = 2;
-            	fcCoords[6] = rc.getLocation().add(Direction.SOUTHEAST).x;
-            	fcCoords[4] = rc.getLocation().add(Direction.SOUTHEAST).y;
-            	if (rc.canSubmitTransaction(fcCoords, 1)) {
-            		rc.submitTransaction(fcCoords, 1);
-            	}
-            	
-            	int[] ngCoords = new int[7];
-            	ngCoords[0] = netgunSecret;
-            	ngCoords[1] = rc.getLocation().add(Direction.NORTHWEST).x;
-            	ngCoords[2] = rc.getLocation().add(Direction.NORTHWEST).y;
-            	ngCoords[3] = rc.getLocation().add(Direction.SOUTHWEST).x;
-            	ngCoords[4] = rc.getLocation().add(Direction.SOUTHWEST).y;
-            	ngCoords[5] = rc.getLocation().add(Direction.NORTHEAST).x;
-            	ngCoords[6] = rc.getLocation().add(Direction.NORTHEAST).y;
-            	if (rc.canSubmitTransaction(ngCoords, 1)) {
-            		rc.submitTransaction(ngCoords, 1);
-            	}
-            	
-            	int[] lsCoords1 = new int[7];
-            	lsCoords1[0] = landscapersSecret1;
-            	lsCoords1[1] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).x;
-            	lsCoords1[2] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).y;
-            	lsCoords1[3] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).x;
-            	lsCoords1[4] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).y;
-            	lsCoords1[5] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).x;
-            	lsCoords1[6] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).y;
-            	if (rc.canSubmitTransaction(lsCoords1, 1)) {
-            		rc.submitTransaction(lsCoords1, 1);
-            	}
-            	
-            	int[] lsCoords2 = new int[7];
-            	lsCoords2[0] = landscapersSecret2;
-            	lsCoords2[1] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).x;
-            	lsCoords2[2] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).y;
-            	lsCoords2[3] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).x;
-            	lsCoords2[4] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).y;
-            	lsCoords2[5] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).x;
-            	lsCoords2[6] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).y;
-            	if (rc.canSubmitTransaction(lsCoords2, 1)) {
-            		rc.submitTransaction(lsCoords2, 1);
-            	}
+    			if (Math.abs(rc.senseElevation(rc.getLocation().add(Direction.NORTH).add(Direction.NORTH)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST)) - rc.senseElevation(rc.getLocation())) < 4) {
+	    			int[] hqCoords = new int[7];
+	    	    	hqCoords[0] = teamSecret;
+	    	    	hqCoords[1] = 1;
+	    	    	hqCoords[6] = rc.getLocation().x;
+	    	    	hqCoords[4] = rc.getLocation().y;
+	            	if (rc.canSubmitTransaction(hqCoords, 1)) {
+	            		rc.submitTransaction(hqCoords, 1);
+	            	}
+	            	
+	            	int[] fcCoords = new int[7];
+	            	fcCoords[0] = teamSecret;
+	            	fcCoords[1] = 2;
+	            	fcCoords[6] = rc.getLocation().add(Direction.SOUTHEAST).x;
+	            	fcCoords[4] = rc.getLocation().add(Direction.SOUTHEAST).y;
+	            	if (rc.canSubmitTransaction(fcCoords, 1)) {
+	            		rc.submitTransaction(fcCoords, 1);
+	            	}
+	            	
+	            	int[] ngCoords = new int[7];
+	            	ngCoords[0] = netgunSecret;
+	            	ngCoords[1] = rc.getLocation().add(Direction.NORTHWEST).x;
+	            	ngCoords[2] = rc.getLocation().add(Direction.NORTHWEST).y;
+	            	ngCoords[3] = rc.getLocation().add(Direction.SOUTHWEST).x;
+	            	ngCoords[4] = rc.getLocation().add(Direction.SOUTHWEST).y;
+	            	ngCoords[5] = rc.getLocation().add(Direction.NORTHEAST).x;
+	            	ngCoords[6] = rc.getLocation().add(Direction.NORTHEAST).y;
+	            	if (rc.canSubmitTransaction(ngCoords, 1)) {
+	            		rc.submitTransaction(ngCoords, 1);
+	            	}
+	            	
+	            	int[] lsCoords1 = new int[7];
+	            	lsCoords1[0] = landscapersSecret1;
+	            	lsCoords1[1] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).x;
+	            	lsCoords1[2] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).y;
+	            	lsCoords1[3] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).x;
+	            	lsCoords1[4] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).y;
+	            	lsCoords1[5] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).x;
+	            	lsCoords1[6] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).y;
+	            	if (rc.canSubmitTransaction(lsCoords1, 1)) {
+	            		rc.submitTransaction(lsCoords1, 1);
+	            	}
+	            	
+	            	int[] lsCoords2 = new int[7];
+	            	lsCoords2[0] = landscapersSecret2;
+	            	lsCoords2[1] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).x;
+	            	lsCoords2[2] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).y;
+	            	lsCoords2[3] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).x;
+	            	lsCoords2[4] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).y;
+	            	lsCoords2[5] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).x;
+	            	lsCoords2[6] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).y;
+	            	if (rc.canSubmitTransaction(lsCoords2, 1)) {
+	            		rc.submitTransaction(lsCoords2, 1);
+	            	}
+    			} else {
+    				int[] offense = new int[7];
+    				offense[0] = teamSecret;
+    				offense[1] = offenseSecret;
+    				if (rc.canSubmitTransaction(offense, 1)) {
+	            		rc.submitTransaction(offense, 1);
+	            	}
+    			}
     		} else {
     			int[] offense = new int[7];
     			offense[0] = teamSecret;
     			offense[1] = offenseSecret;
+    			if (rc.canSubmitTransaction(offense, 1)) {
+            		rc.submitTransaction(offense, 1);
+            	}
     		}
     	}
     }
@@ -347,6 +359,17 @@ public strictfp class RobotPlayer {
 //    	}
     	// code for building miner
 //    	System.out.println(Clock.getBytecodesLeft());
+    	if (rc.getRoundNum() == 2) {
+    		for (Transaction tx : rc.getBlock(1)) {
+    			int[] mess = tx.getMessage();
+    			if (mess[0] == teamSecret && mess[1] == offenseSecret) {
+    				offensive = true;
+    			}
+    		}
+    	}
+    	if (rc.getRoundNum() == 3 && offensive) { 
+    		buildingMiner = true;
+    	}
     	if (offensive) {
     		enemyHQCandidates();
 			Direction dirToEnemyHQ = loc.directionTo(enemyHQLocs[index]);
@@ -368,12 +391,7 @@ public strictfp class RobotPlayer {
 				}
 			}
     	}
-    	
-    	
-    	
-    	
-    	
-    	
+
     	if (buildingMiner) {
     		if (ng3Built) {
     			buildingMiner = false;
@@ -385,18 +403,10 @@ public strictfp class RobotPlayer {
         			int[] mess = tx.getMessage();
         			if (mess[0] == teamSecret && mess[1] == FC_LOC_MESSAGE) {
         				fcLoc = new MapLocation(mess[6], mess[4]);
-        			} else if (mess[0] == vaporatorSecret) {
-        				vap1Loc = new MapLocation(mess[1], mess[2]);
-        				vap2Loc = new MapLocation(mess[3], mess[4]);
-        				vap3Loc = new MapLocation(mess[5], mess[6]);
         			} else if (mess[0] == netgunSecret) {
         				ng1Loc = new MapLocation(mess[1], mess[2]);
         				ng2Loc = new MapLocation(mess[3], mess[4]);
         				ng3Loc = new MapLocation(mess[5], mess[6]);
-        			} else if (mess[0] == teamSecret && mess[1] == offenseSecret) {
-        				if (rc.getRoundNum() == 2) {
-        					offensive = true;
-        				}
         			}
         		}
         	}
@@ -421,58 +431,17 @@ public strictfp class RobotPlayer {
 	    		}
         	}
     		// check if vaporators can be built
-    		if (fcBuilt && !vap1Built && canBuild) {
-    			adjacent = rc.getLocation().isAdjacentTo(vap1Loc);
-    			if (rc.getTeamSoup() >= RobotType.VAPORATOR.cost && !vap1Built && adjacent) {
-    				if (rc.canBuildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap1Loc))) {
-    					rc.buildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap1Loc));
-    					vap1Built = true;
-    				}
-    			} else if (!adjacent) {
-    				tryMove(rc.getLocation().directionTo(vap1Loc));
-    			}
-    		}
-    		if (vap1Built && !vap2Built) {
-    			adjacent = rc.getLocation().isAdjacentTo(vap2Loc);
-    			if (rc.getTeamSoup() >= RobotType.VAPORATOR.cost && !vap2Built && adjacent) {
-    				if (rc.canBuildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap2Loc))) {
-    					rc.buildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap2Loc));
-    					vap2Built = true;
-    				}
-    			} else if (!adjacent) {
-    				tryMove(rc.getLocation().directionTo(vap2Loc));
-    			}
-    		}
-    		if (vap2Built && !vap3Built) {
-    			adjacent = rc.getLocation().isAdjacentTo(vap3Loc);
-    			if (rc.getTeamSoup() >= RobotType.VAPORATOR.cost && !vap3Built && adjacent) {
-    				if (rc.canBuildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap3Loc))) {
-    					rc.buildRobot(RobotType.VAPORATOR, rc.getLocation().directionTo(vap3Loc));
-    					vap3Built = true;
-    					int[] message = new int[7];
-    		        	message[0] = teamSecret;
-    		        	message[1] = 7;
-    		        	if (rc.canSubmitTransaction(message, 1)) {
-    		        		rc.submitTransaction(message, 1);
-    		        	}
-    				}
-    			} else if (!adjacent) {
-    				tryMove(rc.getLocation().directionTo(vap3Loc));
-    			}
-    		}
-    		// check if design school can be built and build it
-    		if (vap3Built && !dsBuilt) {
+    		if (fcBuilt && canBuild) {
     			adjacent = rc.getLocation().isAdjacentTo(dsLoc);
-		    	if (rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && !dsBuilt && adjacent) {
-		    		if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc))) {
-		    			rc.buildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc));
-		    			dsBuilt = true;
-		   			}
-		    	} else if (!adjacent) {
-		    		tryMove(rc.getLocation().directionTo(dsLoc));
-		    	}
+    			if (rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && !dsBuilt && adjacent) {
+    				if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc))) {
+    					rc.buildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc));
+    					dsBuilt = true;
+    				}
+    			} else if (!adjacent) {
+    				tryMove(rc.getLocation().directionTo(dsLoc));
+    			}
     		}
-    		System.out.println(dsBuilt);
     		if (dsBuilt && !ng1Built) {
     			System.out.println("ran");
     			adjacent = rc.getLocation().isAdjacentTo(ng1Loc);
