@@ -203,61 +203,70 @@ public strictfp class RobotPlayer {
     	}
     	if (rc.getRoundNum() == 1) {
     		if (rc.onTheMap(rc.getLocation().add(Direction.NORTH).add(Direction.NORTH)) && rc.onTheMap(rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST)) && rc.onTheMap(rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST)) && rc.onTheMap(rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH)) && rc.onTheMap(rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST)) && rc.onTheMap(rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST)) && rc.onTheMap(rc.getLocation().add(Direction.WEST).add(Direction.WEST).add(Direction.WEST))) {
-    			if (Math.abs(rc.senseElevation(rc.getLocation().add(Direction.NORTH).add(Direction.NORTH)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST)) - rc.senseElevation(rc.getLocation())) < 4) {
+    			if (Math.abs(rc.senseElevation(rc.getLocation().add(Direction.NORTH).add(Direction.NORTH)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.WEST).add(Direction.WEST).add(Direction.WEST))) - rc.senseElevation(rc.getLocation()) < 4) {
 	    			if (!rc.senseFlooding(rc.getLocation().add(Direction.NORTH).add(Direction.NORTH)) && !rc.senseFlooding(rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST)) && !rc.senseFlooding(rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST)) && !rc.senseFlooding(rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH)) && !rc.senseFlooding(rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST)) && !rc.senseFlooding(rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST)) && !rc.senseFlooding(rc.getLocation().add(Direction.WEST).add(Direction.WEST).add(Direction.WEST))) {
-	    				int[] hqCoords = new int[7];
-		    	    	hqCoords[0] = teamSecret;
-		    	    	hqCoords[1] = 1;
-		    	    	hqCoords[6] = rc.getLocation().x;
-		    	    	hqCoords[4] = rc.getLocation().y;
-		            	if (rc.canSubmitTransaction(hqCoords, 1)) {
-		            		rc.submitTransaction(hqCoords, 1);
-		            	}
-		            	
-		            	int[] fcCoords = new int[7];
-		            	fcCoords[0] = teamSecret;
-		            	fcCoords[1] = 2;
-		            	fcCoords[6] = rc.getLocation().add(Direction.SOUTHEAST).x;
-		            	fcCoords[4] = rc.getLocation().add(Direction.SOUTHEAST).y;
-		            	if (rc.canSubmitTransaction(fcCoords, 1)) {
-		            		rc.submitTransaction(fcCoords, 1);
-		            	}
-		            	
-		            	int[] ngCoords = new int[7];
-		            	ngCoords[0] = netgunSecret;
-		            	ngCoords[1] = rc.getLocation().add(Direction.NORTHWEST).x;
-		            	ngCoords[2] = rc.getLocation().add(Direction.NORTHWEST).y;
-		            	ngCoords[3] = rc.getLocation().add(Direction.SOUTHWEST).x;
-		            	ngCoords[4] = rc.getLocation().add(Direction.SOUTHWEST).y;
-		            	ngCoords[5] = rc.getLocation().add(Direction.NORTHEAST).x;
-		            	ngCoords[6] = rc.getLocation().add(Direction.NORTHEAST).y;
-		            	if (rc.canSubmitTransaction(ngCoords, 1)) {
-		            		rc.submitTransaction(ngCoords, 1);
-		            	}
-		            	
-		            	int[] lsCoords1 = new int[7];
-		            	lsCoords1[0] = landscapersSecret1;
-		            	lsCoords1[1] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).x;
-		            	lsCoords1[2] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).y;
-		            	lsCoords1[3] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).x;
-		            	lsCoords1[4] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).y;
-		            	lsCoords1[5] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).x;
-		            	lsCoords1[6] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).y;
-		            	if (rc.canSubmitTransaction(lsCoords1, 1)) {
-		            		rc.submitTransaction(lsCoords1, 1);
-		            	}
-		            	
-		            	int[] lsCoords2 = new int[7];
-		            	lsCoords2[0] = landscapersSecret2;
-		            	lsCoords2[1] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).x;
-		            	lsCoords2[2] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).y;
-		            	lsCoords2[3] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).x;
-		            	lsCoords2[4] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).y;
-		            	lsCoords2[5] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).x;
-		            	lsCoords2[6] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).y;
-		            	if (rc.canSubmitTransaction(lsCoords2, 1)) {
-		            		rc.submitTransaction(lsCoords2, 1);
-		            	}
+		    			if 	(rc.senseElevation(rc.getLocation().add(Direction.NORTH).add(Direction.NORTH)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.WEST).add(Direction.WEST).add(Direction.WEST)) > 2) {
+	    					int[] hqCoords = new int[7];
+			    	    	hqCoords[0] = teamSecret;
+			    	    	hqCoords[1] = 1;
+			    	    	hqCoords[6] = rc.getLocation().x;
+			    	    	hqCoords[4] = rc.getLocation().y;
+			            	if (rc.canSubmitTransaction(hqCoords, 1)) {
+			            		rc.submitTransaction(hqCoords, 1);
+			            	}
+			            	
+			            	int[] fcCoords = new int[7];
+			            	fcCoords[0] = teamSecret;
+			            	fcCoords[1] = 2;
+			            	fcCoords[6] = rc.getLocation().add(Direction.SOUTHEAST).x;
+			            	fcCoords[4] = rc.getLocation().add(Direction.SOUTHEAST).y;
+			            	if (rc.canSubmitTransaction(fcCoords, 1)) {
+			            		rc.submitTransaction(fcCoords, 1);
+			            	}
+			            	
+			            	int[] ngCoords = new int[7];
+			            	ngCoords[0] = netgunSecret;
+			            	ngCoords[1] = rc.getLocation().add(Direction.NORTHEAST).x;
+			            	ngCoords[2] = rc.getLocation().add(Direction.NORTHEAST).y;
+			            	ngCoords[3] = rc.getLocation().add(Direction.NORTHWEST).x;
+			            	ngCoords[4] = rc.getLocation().add(Direction.NORTHWEST).y;
+			            	ngCoords[5] = rc.getLocation().add(Direction.SOUTHWEST).x;
+			            	ngCoords[6] = rc.getLocation().add(Direction.SOUTHWEST).y;
+			            	if (rc.canSubmitTransaction(ngCoords, 1)) {
+			            		rc.submitTransaction(ngCoords, 1);
+			            	}
+			            	
+			            	int[] lsCoords1 = new int[7];
+			            	lsCoords1[0] = landscapersSecret1;
+			            	lsCoords1[3] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).x;
+			            	lsCoords1[4] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).y;
+			            	lsCoords1[5] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).x;
+			            	lsCoords1[6] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).y;
+			            	lsCoords1[1] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).x;
+			            	lsCoords1[2] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).y;
+			            	if (rc.canSubmitTransaction(lsCoords1, 1)) {
+			            		rc.submitTransaction(lsCoords1, 1);
+			            	}
+			            	
+			            	int[] lsCoords2 = new int[7];
+			            	lsCoords2[0] = landscapersSecret2;
+			            	lsCoords2[3] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).x;
+			            	lsCoords2[4] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).y;
+			            	lsCoords2[5] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).x;
+			            	lsCoords2[6] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).y;
+			            	lsCoords2[1] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).x;
+			            	lsCoords2[2] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).y;
+			            	if (rc.canSubmitTransaction(lsCoords2, 1)) {
+			            		rc.submitTransaction(lsCoords2, 1);
+			            	}
+		    			} else {
+	    					int[] offense = new int[7];
+	        				offense[0] = teamSecret;
+	        				offense[1] = offenseSecret;
+	        				if (rc.canSubmitTransaction(offense, 1)) {
+	    	            		rc.submitTransaction(offense, 1);
+	    	            	}
+	    				}
     				} else {
     					int[] offense = new int[7];
         				offense[0] = teamSecret;
@@ -372,6 +381,8 @@ public strictfp class RobotPlayer {
     			int[] mess = tx.getMessage();
     			if (mess[0] == teamSecret && mess[1] == offenseSecret) {
     				offensive = true;
+    			} else {
+    				buildingMiner = true;
     			}
     		}
     	}
@@ -382,12 +393,6 @@ public strictfp class RobotPlayer {
     		if (rc.getRoundNum() == 3) {
     			enemyHQCandidates(hqLoc);
     		}
-			Direction dirToEnemyHQ = loc.directionTo(enemyHQLocs[index]);
-			System.out.println(enemyHQLocs[0]);
-			System.out.println(enemyHQLocs[1]);
-			System.out.println(enemyHQLocs[2]);
-			System.out.println(enemyHQLocs[index]);
-			tryMove(dirToEnemyHQ);
 			if (rc.canSenseLocation(enemyHQLocs[index])) {
 				RobotInfo check = rc.senseRobotAtLocation(enemyHQLocs[index]);
 				if (check == null) {
@@ -403,6 +408,9 @@ public strictfp class RobotPlayer {
 						offensive = false;
 					}
 				}
+			} else {
+				Direction dirToEnemyHQ = loc.directionTo(enemyHQLocs[index]);
+				tryMove(dirToEnemyHQ);
 			}
     	}
 
@@ -445,7 +453,7 @@ public strictfp class RobotPlayer {
 	    		}
         	}
     		// check if vaporators can be built
-    		if (fcBuilt && canBuild) {
+    		if (fcBuilt && canBuild && !dsBuilt) {
     			adjacent = rc.getLocation().isAdjacentTo(dsLoc);
     			if (rc.getTeamSoup() >= RobotType.DESIGN_SCHOOL.cost && !dsBuilt && adjacent) {
     				if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, rc.getLocation().directionTo(dsLoc))) {
@@ -457,7 +465,7 @@ public strictfp class RobotPlayer {
     			}
     		}
     		if (dsBuilt && !ng1Built) {
-    			System.out.println("ran");
+    			System.out.println("built");
     			adjacent = rc.getLocation().isAdjacentTo(ng1Loc);
     			if (rc.getTeamSoup() > RobotType.NET_GUN.cost && !ng1Built && adjacent) {
     				if (rc.canBuildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng1Loc))) {
@@ -488,7 +496,7 @@ public strictfp class RobotPlayer {
     		}
     		if (ng2Built && !ng3Built) {
     			adjacent = rc.getLocation().isAdjacentTo(ng3Loc);
-    			if (rc.getTeamSoup() >= RobotType.NET_GUN.cost && !ng3Built && adjacent) {
+    			if (rc.getTeamSoup() > RobotType.NET_GUN.cost && !ng3Built && adjacent) {
     				if (rc.canBuildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng3Loc))) {
     					rc.buildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng3Loc));
     					ng3Built = true;
@@ -765,30 +773,38 @@ public strictfp class RobotPlayer {
     				lsLoc[4] = new MapLocation(mess[1], mess[2]);
     				lsLoc[5] = new MapLocation(mess[3], mess[4]);
     				lsLoc[6] = new MapLocation(mess[5], mess[6]);
-    			} 
+    			} else if (mess[0] == teamSecret && mess[1] == offenseSecret) {
+    				offensive = true;
+    			}
     		}
     	}
-    	for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
-			int[] mess = tx.getMessage();
-			if (mess[0] == teamSecret && mess[1] == 6) {
-				canBuild = true;
+    	if (offensive) {
+    		for (Direction dir : directions) {
+    			tryBuild(RobotType.LANDSCAPER, dir);
+    		}
+    	} else {
+	    	for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+				int[] mess = tx.getMessage();
+				if (mess[0] == teamSecret && mess[1] == 6) {
+					canBuild = true;
+				}
 			}
-		}
-		if (canBuild && landscaperCount < LANDSCAPER_LIMIT && rc.getTeamSoup() > RobotType.LANDSCAPER.cost) {
-			for (Direction dir : directions) {
-				if (tryBuild(RobotType.LANDSCAPER, dir)) {
-					landscaperCount += 1;
-					int[] mess = new int[7];
-					mess[0] = teamSecret;
-					mess[5] = lsLoc[landscaperCount].x;
-					mess[2] = lsLoc[landscaperCount].y;
-					mess[3] = landscaperCount;
-					if (rc.canSubmitTransaction(mess, 1)) {
-						rc.submitTransaction(mess, 1);
+			if (canBuild && landscaperCount < LANDSCAPER_LIMIT && rc.getTeamSoup() > RobotType.LANDSCAPER.cost) {
+				for (Direction dir : directions) {
+					if (tryBuild(RobotType.LANDSCAPER, dir)) {
+						landscaperCount += 1;
+						int[] mess = new int[7];
+						mess[0] = teamSecret;
+						mess[5] = lsLoc[landscaperCount].x;
+						mess[2] = lsLoc[landscaperCount].y;
+						mess[3] = landscaperCount;
+						if (rc.canSubmitTransaction(mess, 1)) {
+							rc.submitTransaction(mess, 1);
+						}
 					}
 				}
 			}
-		}
+	    }
 		//    	if(landscaperCount < LANDSCAPER_LIMIT) {
 		//    		for(Direction direction: directions) {
 		//    			if(tryBuild(RobotType.LANDSCAPER, direction)) {
@@ -799,18 +815,31 @@ public strictfp class RobotPlayer {
 	}
 
 	static void runFulfillmentCenter() throws GameActionException {
-		for (Direction dir : directions) {
-			if (droneCount < DRONE_LIMIT && rc.getTeamSoup() > RobotType.DELIVERY_DRONE.cost) {
+		if (offensive) {
+			for (Direction dir : directions) {
 				if (tryBuild(RobotType.DELIVERY_DRONE, dir)) {
-					if(droneCount == 0) {
-						int[] message = new int[7];
-						message[0] = teamSecret;
-						message[1] = 5;
-						if (rc.canSubmitTransaction(message, 1)) {
-							rc.submitTransaction(message, 1);
-						}
+					int[] message = new int[7];
+					message[0] = teamSecret;
+					message[1] = 10;
+					if (rc.canSubmitTransaction(message, 1)) {
+						rc.submitTransaction(message, 1);
 					}
-					droneCount += 1;
+				}
+			}
+		} else {
+			for (Direction dir : directions) {
+				if (droneCount < DRONE_LIMIT && rc.getTeamSoup() > RobotType.DELIVERY_DRONE.cost) {
+					if (tryBuild(RobotType.DELIVERY_DRONE, dir)) {
+						if(droneCount == 0) {
+							int[] message = new int[7];
+							message[0] = teamSecret;
+							message[1] = 5;
+							if (rc.canSubmitTransaction(message, 1)) {
+								rc.submitTransaction(message, 1);
+							}
+						}
+						droneCount += 1;
+					}
 				}
 			}
 		}
@@ -829,87 +858,114 @@ public strictfp class RobotPlayer {
 			if(hqLoc != null) {
 				enemyHQCandidates(hqLoc);
 			}
-
 			
-			for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+			for (Transaction tx : rc.getBlock(1)) {
 				int[] mess = tx.getMessage();
-				if (mess[0] == teamSecret) {
-					standLoc = new MapLocation(mess[5], mess[2]);
-					lsID = mess[3];
-					if (mess[3] <= 3) {
-						behind = Direction.NORTH;
-					} else if (mess[3] == 4) {
-						behind = Direction.SOUTH;
-					} else if (mess[3] == 5) {
-						behind = Direction.SOUTHWEST;
-					} else if (mess[3] == 6) {
-						behind = Direction.EAST;
+				if (mess[0] == teamSecret && mess[1] == offenseSecret) {
+					offensive = true;
+					for (RobotInfo r : rc.senseNearbyRobots()) {
+						if (r.getType() == RobotType.HQ) {
+							enemyHqLoc = r.getLocation();
+						}
 					}
 				}
 			}
-			if (lsID == 1 || lsID == 4) {
-				placeDirt[0] = Direction.CENTER;
-				placeDirt[1] = Direction.WEST;
-				placeDirt[2] = Direction.EAST;
-			} else if (lsID == 5 || lsID == 6) {
-				placeDirt[0] = Direction.CENTER;
-				placeDirt[1] = Direction.NORTH;
-				placeDirt[2] = Direction.SOUTH;
-			} else if (lsID == 2) {
-				placeDirt[0] = Direction.CENTER;
-				placeDirt[1] = Direction.EAST;
-				placeDirt[2] = Direction.SOUTH;
-			} else if (lsID == 3) {
-				placeDirt[0] = Direction.CENTER;
-				placeDirt[1] = Direction.WEST;
-				placeDirt[2] = Direction.SOUTH;
-			}
-		}
-		if (stop || !hasStopped) {
-			for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
-				int[] mess = tx.getMessage();
-				if (mess[0] == teamSecret && mess[1] == LS_BUILD_WALL) {
-					System.out.println("l");
-					stop = false;
-					hasStopped = true;
+			if (!offensive) {
+				for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+					int[] mess = tx.getMessage();
+					if (mess[0] == teamSecret) {
+						standLoc = new MapLocation(mess[5], mess[2]);
+						lsID = mess[3];
+						if (mess[3] <= 3) {
+							behind = Direction.NORTH;
+						} else if (mess[3] == 5) {
+							behind = Direction.SOUTH;
+						} else if (mess[3] == 6) {
+							behind = Direction.SOUTHWEST;
+						} else if (mess[3] == 4) {
+							behind = Direction.EAST;
+						}
+					}
+				}
+				if (lsID == 2 || lsID == 5) {
+					placeDirt[0] = Direction.CENTER;
+					placeDirt[1] = Direction.WEST;
+					placeDirt[2] = Direction.EAST;
+				} else if (lsID == 4 || lsID == 6) {
+					placeDirt[0] = Direction.CENTER;
+					placeDirt[1] = Direction.NORTH;
+					placeDirt[2] = Direction.SOUTH;
+				} else if (lsID == 3) {
+					placeDirt[0] = Direction.CENTER;
+					placeDirt[1] = Direction.EAST;
+					placeDirt[2] = Direction.SOUTH;
+				} else if (lsID == 1) {
+					placeDirt[0] = Direction.CENTER;
+					placeDirt[1] = Direction.WEST;
+					placeDirt[2] = Direction.SOUTH;
 				}
 			}
 		}
-		// walk to place
-		loc = rc.getLocation();
-		if (loc.directionTo(standLoc) != Direction.CENTER) {
-			tryMove(loc.directionTo(standLoc));
+		if (offensive) {
+			if (rc.getLocation().isAdjacentTo(enemyHqLoc)) {
+				if (rc.getDirtCarrying() < 1) {
+					for (Direction dir : directions) {
+						if (rc.canDigDirt(dir)) {
+							rc.digDirt(dir);
+						}
+					}
+				} else {
+					if (rc.canDepositDirt(rc.getLocation().directionTo(enemyHqLoc))) {
+						rc.depositDirt(rc.getLocation().directionTo(enemyHqLoc));
+					}
+				}
+			} else {
+				tryMove(rc.getLocation().directionTo(enemyHqLoc));
+			}
 		} else {
-			atLoc = true;
-		}
-		// 		build wall
-		System.out.println(stop);
-		System.out.println("pla");
-		System.out.println(hasStopped);
-		if (!replaceDirt && !stop) {
-			for (Direction dir : placeDirt) {
-				if (dir != last && dir != lastLast) {
-					if (rc.canDepositDirt(dir)) {
-						rc.depositDirt(dir);
-						lastLast = last;
-						last = dir;
-						if (rc.getDirtCarrying() == 0) {
-							replaceDirt = true;
-						}
-						if (!hasStopped && rc.getDirtCarrying() == 0) {
-							stop = true;
-							hasStopped = true;
+			if (stop || !hasStopped) {
+				for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+					int[] mess = tx.getMessage();
+					if (mess[0] == teamSecret && mess[1] == LS_BUILD_WALL) {
+						System.out.println("l");
+						stop = false;
+						hasStopped = true;
+					}
+				}
+			}
+			// walk to place
+			loc = rc.getLocation();
+			if (loc.directionTo(standLoc) != Direction.CENTER) {
+				tryMove(loc.directionTo(standLoc));
+			} else {
+				atLoc = true;
+			}
+			// 		build wall
+			if (!replaceDirt && !stop) {
+				for (Direction dir : placeDirt) {
+					if (dir != last && dir != lastLast) {
+						if (rc.canDepositDirt(dir)) {
+							rc.depositDirt(dir);
+							lastLast = last;
+							last = dir;
+							if (rc.getDirtCarrying() == 0) {
+								replaceDirt = true;
+							}
+							if (!hasStopped && rc.getDirtCarrying() == 0) {
+								stop = true;
+								hasStopped = true;
+							}
 						}
 					}
 				}
 			}
-		}
-		// 		dig dirt behind 
-		if (atLoc == true && replaceDirt) {
-			if (rc.canDigDirt(behind)) { 
-				rc.digDirt(behind);
-				if (rc.getDirtCarrying() == DIRT_LIMIT) {
-					replaceDirt = false;
+			// 		dig dirt behind 
+			if (atLoc == true && replaceDirt) {
+				if (rc.canDigDirt(behind)) { 
+					rc.digDirt(behind);
+					if (rc.getDirtCarrying() == DIRT_LIMIT) {
+						replaceDirt = false;
+					}
 				}
 			}
 		}
