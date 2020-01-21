@@ -75,6 +75,7 @@ public strictfp class RobotPlayer {
     static boolean done = false;
     static boolean offensive = false;
     static int index = 0;
+    static boolean droneAttack = false;
     
     static MapLocation loc;
     static MapLocation fcLoc;
@@ -815,20 +816,38 @@ public strictfp class RobotPlayer {
 	}
 
 	static void runFulfillmentCenter() throws GameActionException {
+		if (turnCount == 1) {
+			for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+				int[] mess = tx.getMessage();
+				if (mess[0] == teamSecret && mess[1] == 11) {
+					offensive = true;
+				}
+			}
+		}
 		if (offensive) {
-			for (Direction dir : directions) {
-				if (tryBuild(RobotType.DELIVERY_DRONE, dir)) {
-					int[] message = new int[7];
-					message[0] = teamSecret;
-					message[1] = 10;
-					if (rc.canSubmitTransaction(message, 1)) {
-						rc.submitTransaction(message, 1);
+			if (droneCount < 1) {
+				for (Direction dir : directions) {
+					if (tryBuild(RobotType.DELIVERY_DRONE, dir)) {
+						int[] message = new int[7];
+						message[0] = teamSecret;
+						message[1] = 10;
+						if (rc.canSubmitTransaction(message, 1)) {
+							rc.submitTransaction(message, 1);
+						}
+						droneCount += 1;
 					}
 				}
 			}
 		} else {
+			Transaction[] transactions = rc.getBlock(rc.getRoundNum() - 1);
+			for(Transaction tx: transactions) {
+				int[] message = tx.getMessage();
+				if(message[0] == teamSecret && message[1] == LS_BUILD_WALL) {
+					droneAttack = true;
+				}
+			}
 			for (Direction dir : directions) {
-				if (droneCount < DRONE_LIMIT && rc.getTeamSoup() > RobotType.DELIVERY_DRONE.cost) {
+				if ((droneCount < 1|| droneAttack) && rc.getTeamSoup() > RobotType.DELIVERY_DRONE.cost) {
 					if (tryBuild(RobotType.DELIVERY_DRONE, dir)) {
 						if(droneCount == 0) {
 							int[] message = new int[7];
@@ -999,6 +1018,14 @@ public strictfp class RobotPlayer {
 			tryMove(dirToDroneLoc);
 			}
 		else if(!protectorDrone && rc.isReady()) {
+			if(rc.canSenseLocation(hqLoc)) {
+				RobotInfo[] nearbyMiners = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, rc.getTeam());
+				for(RobotInfo r: nearbyMiners) {
+					if(rc.canPickUpUnit(r.ID)&& r.type == RobotType.MINER) {
+						rc.pickUpUnit(r.ID);
+					}
+				}
+			}
 			if(enemyHQLocs == null) {
 				enemyHQCandidates(hqLoc);
 			}
@@ -1079,7 +1106,6 @@ public strictfp class RobotPlayer {
 						approachToRobot = r;
 					}
 				}
-
 				if(approachToRobot != null) {
 					Direction dirToEnemy = curLoc.directionTo(approachToRobot.location);
 					System.out.println(dirToEnemy);
@@ -1087,30 +1113,10 @@ public strictfp class RobotPlayer {
 				}
 			}
 		else if(rc.isReady()) {
-			droneHoldingFor += 1;
-			if(droneHoldingFor >= DRONE_HOLD_LIMIT) {
-				int height = rc.getMapHeight();
-				int width = rc.getMapWidth();
-				MapLocation loc1 = new MapLocation(0, 0);
-				MapLocation loc2 = new MapLocation(0, height);
-				MapLocation loc3 = new MapLocation(width, 0);
-				MapLocation loc4 = new MapLocation(width, height);
-				MapLocation[] corners = {loc1, loc2, loc3, loc4};
-				MapLocation closest = null;
-				int minDist = Integer.MAX_VALUE;
-				for(MapLocation corner: corners) {
-					int dist = rc.getLocation().distanceSquaredTo(corner);
-					if(dist < minDist) {
-						closest = corner;
-					}
-				}
-				waterLoc = closest;
-
-			}
-
 			System.out.println("currently carrying a unit");
-			if(waterLoc != null && !curLoc.equals(waterLoc) && !rc.senseFlooding(curLoc)) {
+			if(waterLoc != null && !curLoc.equals(waterLoc) && !rc.senseFlooding(curLoc) && !curLoc.isAdjacentTo(waterLoc)) {
 				Direction dirToWater = curLoc.directionTo(waterLoc);
+				System.out.println("trying to move to whhere i can sense water");
 				tryMove(dirToWater);
 			}
 
@@ -1124,13 +1130,18 @@ public strictfp class RobotPlayer {
 				}
 			}
 			
-			searchFlooding();
+			if(waterLoc == null) {
+				searchFlooding();
+			}
 
 			if(waterLoc != null) {
 				Direction dirToWater = curLoc.directionTo(waterLoc);
 				tryMove(dirToWater);
 			}
-			
+			tryMove(randomDirection(last));
+		}
+		
+	}
 
 //			System.out.println("carrying a unit");
 //			loc = rc.getLocation();
@@ -1241,10 +1252,6 @@ public strictfp class RobotPlayer {
 //					}
 //				}
 //			}
-			tryMove(randomDirection(last));
-		}
-		
-	}
 
   static void searchFlooding() throws GameActionException {
 	if(rc.isReady()) {
