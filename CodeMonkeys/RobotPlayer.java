@@ -204,146 +204,131 @@ public strictfp class RobotPlayer {
 	            }
     	}
     	if (rc.getRoundNum() == 1) {
-    		int[] offense = new int[7];
-			offense[0] = teamSecret;
-			offense[1] = offenseSecret;
-			if (rc.canSubmitTransaction(offense, 1)) {
-        		rc.submitTransaction(offense, 1);
-        	}
-			
-			int[] hqCoords = new int[7];
-	    	hqCoords[0] = teamSecret;
-	    	hqCoords[1] = 1;
-	    	hqCoords[6] = rc.getLocation().x;
-	    	hqCoords[4] = rc.getLocation().y;
-        	if (rc.canSubmitTransaction(hqCoords, 1)) {
-        		rc.submitTransaction(hqCoords, 1);
-        	}
-//    		if (rc.onTheMap(rc.getLocation().add(Direction.NORTH).add(Direction.NORTH)) && rc.onTheMap(rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST)) && rc.onTheMap(rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST)) && rc.onTheMap(rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH)) && rc.onTheMap(rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST)) && rc.onTheMap(rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST)) && rc.onTheMap(rc.getLocation().add(Direction.WEST).add(Direction.WEST).add(Direction.WEST))) {
-//    			if (Math.abs(rc.senseElevation(rc.getLocation().add(Direction.NORTH).add(Direction.NORTH)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.WEST).add(Direction.WEST).add(Direction.WEST))) - rc.senseElevation(rc.getLocation()) < 4) {
-//	    			if (!rc.senseFlooding(rc.getLocation().add(Direction.NORTH).add(Direction.NORTH)) && !rc.senseFlooding(rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST)) && !rc.senseFlooding(rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST)) && !rc.senseFlooding(rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH)) && !rc.senseFlooding(rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST)) && !rc.senseFlooding(rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST)) && !rc.senseFlooding(rc.getLocation().add(Direction.WEST).add(Direction.WEST).add(Direction.WEST))) {
-//		    			if 	(rc.senseElevation(rc.getLocation().add(Direction.NORTH).add(Direction.NORTH)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.WEST).add(Direction.WEST).add(Direction.WEST)) > 2) {
-//	    					int[] hqCoords = new int[7];
-//			    	    	hqCoords[0] = teamSecret;
-//			    	    	hqCoords[1] = 1;
-//			    	    	hqCoords[6] = rc.getLocation().x;
-//			    	    	hqCoords[4] = rc.getLocation().y;
-//			            	if (rc.canSubmitTransaction(hqCoords, 1)) {
-//			            		rc.submitTransaction(hqCoords, 1);
-//			            	}
-//			            	
-//			            	int[] fcCoords = new int[7];
-//			            	fcCoords[0] = teamSecret;
-//			            	fcCoords[1] = 2;
-//			            	fcCoords[6] = rc.getLocation().add(Direction.SOUTHEAST).x;
-//			            	fcCoords[4] = rc.getLocation().add(Direction.SOUTHEAST).y;
-//			            	if (rc.canSubmitTransaction(fcCoords, 1)) {
-//			            		rc.submitTransaction(fcCoords, 1);
-//			            	}
-//			            	
-//			            	int[] ngCoords = new int[7];
-//			            	ngCoords[0] = netgunSecret;
-//			            	ngCoords[1] = rc.getLocation().add(Direction.NORTHEAST).x;
-//			            	ngCoords[2] = rc.getLocation().add(Direction.NORTHEAST).y;
-//			            	ngCoords[3] = rc.getLocation().add(Direction.NORTHWEST).x;
-//			            	ngCoords[4] = rc.getLocation().add(Direction.NORTHWEST).y;
-//			            	ngCoords[5] = rc.getLocation().add(Direction.SOUTHWEST).x;
-//			            	ngCoords[6] = rc.getLocation().add(Direction.SOUTHWEST).y;
-//			            	if (rc.canSubmitTransaction(ngCoords, 1)) {
-//			            		rc.submitTransaction(ngCoords, 1);
-//			            	}
-//			            	
-//			            	int[] lsCoords1 = new int[7];
-//			            	lsCoords1[0] = landscapersSecret1;
-//			            	lsCoords1[3] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).x;
-//			            	lsCoords1[4] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).y;
-//			            	lsCoords1[5] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).x;
-//			            	lsCoords1[6] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).y;
-//			            	lsCoords1[1] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).x;
-//			            	lsCoords1[2] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).y;
-//			            	if (rc.canSubmitTransaction(lsCoords1, 1)) {
-//			            		rc.submitTransaction(lsCoords1, 1);
-//			            	}
-//			            	
-//			            	int[] lsCoords2 = new int[7];
-//			            	lsCoords2[0] = landscapersSecret2;
-//			            	lsCoords2[3] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).x;
-//			            	lsCoords2[4] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).y;
-//			            	lsCoords2[5] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).x;
-//			            	lsCoords2[6] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).y;
-//			            	lsCoords2[1] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).x;
-//			            	lsCoords2[2] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).y;
-//			            	if (rc.canSubmitTransaction(lsCoords2, 1)) {
-//			            		rc.submitTransaction(lsCoords2, 1);
-//			            	}
-//		    			} else {
-//	    					int[] offense = new int[7];
-//	        				offense[0] = teamSecret;
-//	        				offense[1] = offenseSecret;
-//	        				if (rc.canSubmitTransaction(offense, 1)) {
-//	    	            		rc.submitTransaction(offense, 1);
-//	    	            	}
-//	        				
-//	        				int[] hqCoords = new int[7];
-//			    	    	hqCoords[0] = teamSecret;
-//			    	    	hqCoords[1] = 1;
-//			    	    	hqCoords[6] = rc.getLocation().x;
-//			    	    	hqCoords[4] = rc.getLocation().y;
-//			            	if (rc.canSubmitTransaction(hqCoords, 1)) {
-//			            		rc.submitTransaction(hqCoords, 1);
-//			            	}
-//	    				}
-//    				} else {
-//    					int[] offense = new int[7];
-//        				offense[0] = teamSecret;
-//        				offense[1] = offenseSecret;
-//        				if (rc.canSubmitTransaction(offense, 1)) {
-//    	            		rc.submitTransaction(offense, 1);
-//    	            	}
-//        				
-//        				int[] hqCoords = new int[7];
-//		    	    	hqCoords[0] = teamSecret;
-//		    	    	hqCoords[1] = 1;
-//		    	    	hqCoords[6] = rc.getLocation().x;
-//		    	    	hqCoords[4] = rc.getLocation().y;
-//		            	if (rc.canSubmitTransaction(hqCoords, 1)) {
-//		            		rc.submitTransaction(hqCoords, 1);
-//		            	}
-//    				}
-//    			} else {
-//    				int[] offense = new int[7];
-//    				offense[0] = teamSecret;
-//    				offense[1] = offenseSecret;
-//    				if (rc.canSubmitTransaction(offense, 1)) {
-//	            		rc.submitTransaction(offense, 1);
-//	            	}
-//    				
-//    				int[] hqCoords = new int[7];
-//	    	    	hqCoords[0] = teamSecret;
-//	    	    	hqCoords[1] = 1;
-//	    	    	hqCoords[6] = rc.getLocation().x;
-//	    	    	hqCoords[4] = rc.getLocation().y;
-//	            	if (rc.canSubmitTransaction(hqCoords, 1)) {
-//	            		rc.submitTransaction(hqCoords, 1);
-//	            	}
-//    			}
-//    		} else {
-//    			int[] offense = new int[7];
-//    			offense[0] = teamSecret;
-//    			offense[1] = offenseSecret;
-//    			if (rc.canSubmitTransaction(offense, 1)) {
-//            		rc.submitTransaction(offense, 1);
-//            	}
-//    			
-//    			int[] hqCoords = new int[7];
-//    	    	hqCoords[0] = teamSecret;
-//    	    	hqCoords[1] = 1;
-//    	    	hqCoords[6] = rc.getLocation().x;
-//    	    	hqCoords[4] = rc.getLocation().y;
-//            	if (rc.canSubmitTransaction(hqCoords, 1)) {
-//            		rc.submitTransaction(hqCoords, 1);
-//            	}
-//    		}
+    		if (rc.onTheMap(rc.getLocation().add(Direction.NORTH).add(Direction.NORTH)) && rc.onTheMap(rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST)) && rc.onTheMap(rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST)) && rc.onTheMap(rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH)) && rc.onTheMap(rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST)) && rc.onTheMap(rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST)) && rc.onTheMap(rc.getLocation().add(Direction.WEST).add(Direction.WEST).add(Direction.WEST))) {
+    			if (Math.abs(rc.senseElevation(rc.getLocation().add(Direction.NORTH).add(Direction.NORTH)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST)) - rc.senseElevation(rc.getLocation())) < 4 && Math.abs(rc.senseElevation(rc.getLocation().add(Direction.WEST).add(Direction.WEST).add(Direction.WEST))) - rc.senseElevation(rc.getLocation()) < 4) {
+	    			if (!rc.senseFlooding(rc.getLocation().add(Direction.NORTH).add(Direction.NORTH)) && !rc.senseFlooding(rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST)) && !rc.senseFlooding(rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST)) && !rc.senseFlooding(rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH)) && !rc.senseFlooding(rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST)) && !rc.senseFlooding(rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST)) && !rc.senseFlooding(rc.getLocation().add(Direction.WEST).add(Direction.WEST).add(Direction.WEST))) {
+		    			if 	(rc.senseElevation(rc.getLocation().add(Direction.NORTH).add(Direction.NORTH)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST)) > 2 && rc.senseElevation(rc.getLocation().add(Direction.WEST).add(Direction.WEST).add(Direction.WEST)) > 2) {
+	    					int[] hqCoords = new int[7];
+			    	    	hqCoords[0] = teamSecret;
+			    	    	hqCoords[1] = 1;
+			    	    	hqCoords[6] = rc.getLocation().x;
+			    	    	hqCoords[4] = rc.getLocation().y;
+			            	if (rc.canSubmitTransaction(hqCoords, 1)) {
+			            		rc.submitTransaction(hqCoords, 1);
+			            	}
+			            	
+			            	int[] fcCoords = new int[7];
+			            	fcCoords[0] = teamSecret;
+			            	fcCoords[1] = 2;
+			            	fcCoords[6] = rc.getLocation().add(Direction.SOUTHEAST).x;
+			            	fcCoords[4] = rc.getLocation().add(Direction.SOUTHEAST).y;
+			            	if (rc.canSubmitTransaction(fcCoords, 1)) {
+			            		rc.submitTransaction(fcCoords, 1);
+			            	}
+			            	
+			            	int[] ngCoords = new int[7];
+			            	ngCoords[0] = netgunSecret;
+			            	ngCoords[1] = rc.getLocation().add(Direction.NORTHEAST).x;
+			            	ngCoords[2] = rc.getLocation().add(Direction.NORTHEAST).y;
+			            	ngCoords[3] = rc.getLocation().add(Direction.NORTHWEST).x;
+			            	ngCoords[4] = rc.getLocation().add(Direction.NORTHWEST).y;
+			            	ngCoords[5] = rc.getLocation().add(Direction.SOUTHWEST).x;
+			            	ngCoords[6] = rc.getLocation().add(Direction.SOUTHWEST).y;
+			            	if (rc.canSubmitTransaction(ngCoords, 1)) {
+			            		rc.submitTransaction(ngCoords, 1);
+			            	}
+			            	
+			            	int[] lsCoords1 = new int[7];
+			            	lsCoords1[0] = landscapersSecret1;
+			            	lsCoords1[3] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).x;
+			            	lsCoords1[4] = rc.getLocation().add(Direction.NORTH).add(Direction.NORTH).y;
+			            	lsCoords1[5] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).x;
+			            	lsCoords1[6] = rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST).y;
+			            	lsCoords1[1] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).x;
+			            	lsCoords1[2] = rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST).y;
+			            	if (rc.canSubmitTransaction(lsCoords1, 1)) {
+			            		rc.submitTransaction(lsCoords1, 1);
+			            	}
+			            	
+			            	int[] lsCoords2 = new int[7];
+			            	lsCoords2[0] = landscapersSecret2;
+			            	lsCoords2[3] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).x;
+			            	lsCoords2[4] = rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH).y;
+			            	lsCoords2[5] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).x;
+			            	lsCoords2[6] = rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST).y;
+			            	lsCoords2[1] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).x;
+			            	lsCoords2[2] = rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST).y;
+			            	if (rc.canSubmitTransaction(lsCoords2, 1)) {
+			            		rc.submitTransaction(lsCoords2, 1);
+			            	}
+		    			} else {
+	    					int[] offense = new int[7];
+	        				offense[0] = teamSecret;
+	        				offense[1] = offenseSecret;
+	        				if (rc.canSubmitTransaction(offense, 1)) {
+	    	            		rc.submitTransaction(offense, 1);
+	    	            	}
+	        				
+	        				int[] hqCoords = new int[7];
+			    	    	hqCoords[0] = teamSecret;
+			    	    	hqCoords[1] = 1;
+			    	    	hqCoords[6] = rc.getLocation().x;
+			    	    	hqCoords[4] = rc.getLocation().y;
+			            	if (rc.canSubmitTransaction(hqCoords, 1)) {
+			            		rc.submitTransaction(hqCoords, 1);
+			            	}
+	    				}
+    				} else {
+    					int[] offense = new int[7];
+        				offense[0] = teamSecret;
+        				offense[1] = offenseSecret;
+        				if (rc.canSubmitTransaction(offense, 1)) {
+    	            		rc.submitTransaction(offense, 1);
+    	            	}
+        				
+        				int[] hqCoords = new int[7];
+		    	    	hqCoords[0] = teamSecret;
+		    	    	hqCoords[1] = 1;
+		    	    	hqCoords[6] = rc.getLocation().x;
+		    	    	hqCoords[4] = rc.getLocation().y;
+		            	if (rc.canSubmitTransaction(hqCoords, 1)) {
+		            		rc.submitTransaction(hqCoords, 1);
+		            	}
+    				}
+    			} else {
+    				int[] offense = new int[7];
+    				offense[0] = teamSecret;
+    				offense[1] = offenseSecret;
+    				if (rc.canSubmitTransaction(offense, 1)) {
+	            		rc.submitTransaction(offense, 1);
+	            	}
+    				
+    				int[] hqCoords = new int[7];
+	    	    	hqCoords[0] = teamSecret;
+	    	    	hqCoords[1] = 1;
+	    	    	hqCoords[6] = rc.getLocation().x;
+	    	    	hqCoords[4] = rc.getLocation().y;
+	            	if (rc.canSubmitTransaction(hqCoords, 1)) {
+	            		rc.submitTransaction(hqCoords, 1);
+	            	}
+    			}
+    		} else {
+    			int[] offense = new int[7];
+    			offense[0] = teamSecret;
+    			offense[1] = offenseSecret;
+    			if (rc.canSubmitTransaction(offense, 1)) {
+            		rc.submitTransaction(offense, 1);
+            	}
+    			
+    			int[] hqCoords = new int[7];
+    	    	hqCoords[0] = teamSecret;
+    	    	hqCoords[1] = 1;
+    	    	hqCoords[6] = rc.getLocation().x;
+    	    	hqCoords[4] = rc.getLocation().y;
+            	if (rc.canSubmitTransaction(hqCoords, 1)) {
+            		rc.submitTransaction(hqCoords, 1);
+            	}
+    		}
     	}
     }
     
@@ -582,12 +567,6 @@ public strictfp class RobotPlayer {
     				if (rc.canBuildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng3Loc))) {
     					rc.buildRobot(RobotType.NET_GUN, rc.getLocation().directionTo(ng3Loc));
     					ng3Built = true;
-    					int[] message = new int[7];
-            	    	message[0] = teamSecret;
-            	    	message[1] = LS_BUILD_WALL;
-                    	if (rc.canSubmitTransaction(message, 1)) {
-                    		rc.submitTransaction(message, 1);
-                    	}
     				}
     			} else if (!adjacent) {
     				tryMove(rc.getLocation().directionTo(ng3Loc));
@@ -885,6 +864,13 @@ public strictfp class RobotPlayer {
 						}
 					}
 				}
+			} else if (landscaperCount >= LANDSCAPER_LIMIT) {
+				int[] message = new int[7];
+    	    	message[0] = teamSecret;
+    	    	message[1] = LS_BUILD_WALL;
+            	if (rc.canSubmitTransaction(message, 1)) {
+            		rc.submitTransaction(message, 1);
+            	}
 			}
 	    }
 		//    	if(landscaperCount < LANDSCAPER_LIMIT) {
@@ -912,7 +898,9 @@ public strictfp class RobotPlayer {
 			if (droneCount < 1) {
 				for (Direction dir : directions) {
 					if (rc.getTeamSoup() > RobotType.DELIVERY_DRONE.cost) {
-						tryBuild(RobotType.DELIVERY_DRONE, dir);
+						if (tryBuild(RobotType.DELIVERY_DRONE, dir)) {
+							droneCount += 1;
+						}
 						int[] message = new int[7];
 						message[0] = teamSecret;
 						message[1] = 10;
@@ -921,7 +909,6 @@ public strictfp class RobotPlayer {
 						if (rc.canSubmitTransaction(message, 1)) {
 							rc.submitTransaction(message, 1);
 						}
-						droneCount += 1;
 					}
 				}
 			}
