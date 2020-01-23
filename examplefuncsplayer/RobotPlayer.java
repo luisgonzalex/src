@@ -58,6 +58,13 @@ public strictfp class RobotPlayer {
     }
 
     static void runHQ() throws GameActionException {
+    	for (RobotInfo rob : rc.senseNearbyRobots()) {
+    		if (rob.type == RobotType.DELIVERY_DRONE) {
+    			if (rc.canShootUnit(rob.ID)) {
+    				rc.shootUnit(rob.ID);
+    			}
+    		}
+    	}
     	if (minerCount == 0 || minerCount == 1) {
     		for (Direction dir : directions) {
                 if (tryBuild(RobotType.MINER, dir)) {
