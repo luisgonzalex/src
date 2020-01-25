@@ -1,4 +1,4 @@
-package CodeMonkeys;
+package CodeMonkeysMirror;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -65,12 +65,12 @@ public strictfp class RobotPlayer {
     static int hqElevation;
     static MapLocation lastSoupMined;
     static MapLocation depositLoc;
-    static int teamSecret = 72151689;
-    static int vaporatorSecret = 721516891;
-    static int netgunSecret = 721516892;
-    static int landscapersSecret1 = 721516893;
-    static int landscapersSecret2 = 721516894;
-    static int offenseSecret = 72151688;
+    static int teamSecret = 72151690;
+    static int vaporatorSecret = 721516812;
+    static int netgunSecret = 721516859;
+    static int landscapersSecret1 = 721516805;
+    static int landscapersSecret2 = 721516817;
+    static int offenseSecret = 72151667;
     static HashMap<Direction, Direction> oppositeDirection = new HashMap<>();
     static HashMap<Direction, Direction[]> alternateDirs = new HashMap<>();
     static Direction last;
@@ -947,27 +947,9 @@ public strictfp class RobotPlayer {
 			}
 		}
 		if (offensive) {
-			boolean nearbyMiner = false;
-			boolean nearbyDrone = false;
-			boolean nearbyEnemyHQ = false;
-			RobotInfo[] nearbyBots = rc.senseNearbyRobots();
-			for(RobotInfo rob: nearbyBots) {
-				if(rob.type == RobotType.MINER && rob.team == rc.getTeam()) {
-					nearbyMiner = true;
-				}
-				else if(rob.type == RobotType.DELIVERY_DRONE && rob.team == rc.getTeam()) {
-					nearbyDrone = true;
-				}
-				else if(rob.type == RobotType.HQ && rob.team == rc.getTeam().opponent()) {
-					nearbyEnemyHQ = true;
-					enemyHqLoc = rob.location;
-				}
-			}
-			System.out.println("nearby enemy HQ: " + nearbyEnemyHQ);
-			MapLocation curLoc = rc.getLocation();
-			if (nearbyMiner && !nearbyDrone) {
+			if (droneCount < 1) {
 				for (Direction dir : directions) {
-					if (rc.getTeamSoup() > RobotType.DELIVERY_DRONE.cost && (!nearbyEnemyHQ || curLoc.distanceSquaredTo(enemyHqLoc) < curLoc.add(dir).distanceSquaredTo(enemyHqLoc))){
+					if (rc.getTeamSoup() > RobotType.DELIVERY_DRONE.cost) {
 						if (tryBuild(RobotType.DELIVERY_DRONE, dir)) {
 							droneCount += 1;
 							int[] message = new int[7];
@@ -1211,8 +1193,7 @@ public strictfp class RobotPlayer {
 							loc = rob.getLocation();
 						}
 					}
-					moveOffensiveDrone(rc.getLocation().directionTo(loc));
-//					tryMove(rc.getLocation().directionTo(loc));
+					tryMove(rc.getLocation().directionTo(loc));
 				}
 			}
 			if (rc.isCurrentlyHoldingUnit()) {
@@ -1225,109 +1206,51 @@ public strictfp class RobotPlayer {
 				}
 				if (rc.canSenseLocation(enemyHQLocs[index])) {
 					if (rc.senseRobotAtLocation(enemyHQLocs[index]).type == RobotType.HQ) {
-						if (Math.abs(rc.senseElevation(enemyHQLocs[index]) - rc.senseElevation(rc.getLocation())) > 3) {
+						if (rc.senseElevation(enemyHQLocs[index]) < rc.senseElevation(rc.getLocation())) {
 							searchLowerGround();
 						}
 					}
-				} else {
+				} else if (rc.getLocation().isAdjacentTo(enemyHQLocs[index])) {
 					for (Direction dir : directions) {
-						if (rc.canDropUnit(dir) && rc.getLocation().add(dir).distanceSquaredTo(enemyHQLocs[index]) > RobotType.NET_GUN.sensorRadiusSquared) {
+						if (rc.canDropUnit(dir)) {
 							rc.dropUnit(dir);
 							offensive = false;
 						}
 					}
+				} else {
 					Direction dirToEnemyHQ = rc.getLocation().directionTo(enemyHQLocs[index]);
-//					tryMove(dirToEnemyHQ);
-					moveOffensiveDrone(dirToEnemyHQ);
+					tryMove(dirToEnemyHQ);
 				}
 			}
     	}
-		else {
 
-			MapLocation curLoc = rc.getLocation();
-			Team enemy = rc.getTeam().opponent();
-			MapLocation droneLoc = hqLoc.add(Direction.EAST).add(Direction.EAST);
-			// controls for protector drone
-			if (protectorDrone && rc.isReady() && !rc.isCurrentlyHoldingUnit() && !curLoc.equals(droneLoc)) {
-				if(!curLoc.isAdjacentTo(droneLoc) || rc.canSenseLocation(droneLoc) ) {
-					Direction dirToDroneLoc = curLoc.directionTo(droneLoc);
-					tryMove(dirToDroneLoc);
-				}
-			}	else if(!protectorDrone && rc.isReady()) {
-	//			if(rc.canSenseLocation(hqLoc)) {
-	//				RobotInfo[] nearbyMiners = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, rc.getTeam());
-	//				for(RobotInfo r: nearbyMiners) {
-	//					if(rc.canPickUpUnit(r.ID)&& r.type == RobotType.MINER) {
-	//						rc.pickUpUnit(r.ID);
-	//					}
-	//				}
-	//			}
-				if(enemyHQLocs == null) {
-					enemyHQCandidates(hqLoc);
-				} 
-				if(enemyHqLoc != null) {
-					System.out.println(enemyHqLoc);
-					if(rc.canSenseLocation(enemyHqLoc)) {
-	
-						RobotInfo[] pickupRobots = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, enemy);
-	
-						for(RobotInfo rob: pickupRobots) {
-							if (rob.type != RobotType.HQ && rc.canPickUpUnit(rob.ID)) {
-								// Pick up a first robot within range
-								rc.pickUpUnit(rob.ID);
-								//                    System.out.println("I picked up " + robots[0].getID() + "!");
-							}
-						}
-	
-						RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, enemy);
-						RobotInfo approachToRobot = null;
-						int closestBot = Integer.MAX_VALUE;
-	
-						for(RobotInfo r: nearbyRobots) {
-							int distToBot = curLoc.distanceSquaredTo(r.location);
-							if(r.type != RobotType.HQ && distToBot < closestBot) {
-								approachToRobot = r;
-							}
-						}
-	
-						if(approachToRobot != null) {
-							Direction dirToEnemy = curLoc.directionTo(approachToRobot.location);
-							System.out.println(dirToEnemy);
-							tryMove(dirToEnemy);
-						}
-					}
-					Direction dirToEnemyHQ = curLoc.directionTo(enemyHqLoc);
-					tryMove(dirToEnemyHQ);
-				}
-				MapLocation curCandidate = enemyHQLocs[enemyHQIndex];
-				Direction desiredDir = curLoc.directionTo(curCandidate);
-				if(rc.canSenseLocation(curCandidate)) {
-					RobotInfo enemyRobot = rc.senseRobotAtLocation(curCandidate);
-					if(enemyRobot != null && enemyRobot.team == enemy && enemyRobot.type == RobotType.HQ) {
-						enemyHqLoc = curCandidate;
-						System.out.println("found enemy hq");
-					}
-					else {
-						System.out.println("im at hq Loc " + curCandidate + " but i didn't find hq");
-						enemyHQIndex = (enemyHQIndex + 1) % enemyHQLocs.length;
-						curCandidate = enemyHQLocs[enemyHQIndex];
-						desiredDir = curLoc.directionTo(curCandidate);
-					}
-				}
-				System.out.println("current Candidate: " + curCandidate);
-				System.out.println("desired Direction: " + desiredDir);
-				System.out.println("cooldown turns: " + rc.getCooldownTurns());
-				tryMove(desiredDir);
-				
+		MapLocation curLoc = rc.getLocation();
+		Team enemy = rc.getTeam().opponent();
+		MapLocation droneLoc = hqLoc.add(Direction.EAST).add(Direction.EAST);
+		// controls for protector drone
+		if (protectorDrone && rc.isReady() && !rc.isCurrentlyHoldingUnit() && !curLoc.equals(droneLoc)) {
+			if(!curLoc.isAdjacentTo(droneLoc) || rc.canSenseLocation(droneLoc) ) {
+				Direction dirToDroneLoc = curLoc.directionTo(droneLoc);
+				tryMove(dirToDroneLoc);
 			}
-			if (!rc.isCurrentlyHoldingUnit() && rc.isReady()) {
-					// See if there are any enemy robots within striking range (distance 1 from lumberjack's radius)
-					if(rc.senseFlooding(curLoc)) {
-						Direction dirToBase = curLoc.directionTo(droneLoc);
-						tryMove(dirToBase);
-					}
+		}	else if(!protectorDrone && rc.isReady()) {
+//			if(rc.canSenseLocation(hqLoc)) {
+//				RobotInfo[] nearbyMiners = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, rc.getTeam());
+//				for(RobotInfo r: nearbyMiners) {
+//					if(rc.canPickUpUnit(r.ID)&& r.type == RobotType.MINER) {
+//						rc.pickUpUnit(r.ID);
+//					}
+//				}
+//			}
+			if(enemyHQLocs == null) {
+				enemyHQCandidates(hqLoc);
+			} 
+			if(enemyHqLoc != null) {
+				System.out.println(enemyHqLoc);
+				if(rc.canSenseLocation(enemyHqLoc)) {
+
 					RobotInfo[] pickupRobots = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, enemy);
-					
+
 					for(RobotInfo rob: pickupRobots) {
 						if (rob.type != RobotType.HQ && rc.canPickUpUnit(rob.ID)) {
 							// Pick up a first robot within range
@@ -1335,108 +1258,123 @@ public strictfp class RobotPlayer {
 							//                    System.out.println("I picked up " + robots[0].getID() + "!");
 						}
 					}
-	
+
 					RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, enemy);
 					RobotInfo approachToRobot = null;
 					int closestBot = Integer.MAX_VALUE;
-	
+
 					for(RobotInfo r: nearbyRobots) {
 						int distToBot = curLoc.distanceSquaredTo(r.location);
-						if(distToBot < closestBot) {
+						if(r.type != RobotType.HQ && distToBot < closestBot) {
 							approachToRobot = r;
 						}
 					}
+
 					if(approachToRobot != null) {
 						Direction dirToEnemy = curLoc.directionTo(approachToRobot.location);
 						System.out.println(dirToEnemy);
 						tryMove(dirToEnemy);
 					}
 				}
-			else if(rc.isReady()) {
-				System.out.println("currently carrying a unit");
-				if(waterLoc != null) {
-					System.out.println("waterLoc: " + waterLoc);
-				}
-				if(droneHoldingFor == DRONE_HOLD_LIMIT) {
-					if(enemyHQLocs == null) {
-						enemyHQCandidates(hqLoc);
-					}
-					waterLoc = enemyHQLocs[(int) (Math.random()*enemyHQLocs.length)];
-				}
-				if(waterLoc != null && !curLoc.equals(waterLoc) && !rc.senseFlooding(curLoc) && !curLoc.isAdjacentTo(waterLoc)) {
-					Direction dirToWater = curLoc.directionTo(waterLoc);
-					System.out.println("trying to move to whhere i can sense water");
-					tryMove(dirToWater);
-				}
-				
-	
-				for(Direction dir: directions) {
-					if(rc.canSenseLocation(curLoc.add(dir))) {
-						if((rc.senseFlooding(curLoc.add(dir)) || (waterLoc != null && curLoc.isAdjacentTo(waterLoc) && rc.senseFlooding(curLoc.add(dir))))  && rc.canDropUnit(dir)) {
-							System.out.println("I am trying to drop the unit");
-							rc.dropUnit(dir);
-							droneHoldingFor = 0;
-							waterLoc = curLoc;
-						}
-					}
-				}
-				
-				if(waterLoc == null) {
-					searchFlooding();
-				}
-	
-				if(waterLoc != null) {
-					Direction dirToWater = curLoc.directionTo(waterLoc);
-					tryMove(dirToWater);
-				}
-				tryMove(randomDirection(last));
-				droneHoldingFor += 1;
+				Direction dirToEnemyHQ = curLoc.directionTo(enemyHqLoc);
+				tryMove(dirToEnemyHQ);
 			}
-		}
-	}
-
-
-static boolean moveOffensiveDrone(Direction dir) throws GameActionException{
-
-	boolean didMove = false;
-	boolean enemyHQNearby = false;
-	RobotInfo[] nearbyBots = rc.senseNearbyRobots();
-	for(RobotInfo rob: nearbyBots) {
-		if(rob.type == RobotType.HQ && rob.team == rc.getTeam().opponent()) {
-			enemyHQNearby = true;
-			enemyHqLoc = rob.location;
-		}
-	}
-	
-	MapLocation curLoc = rc.getLocation();
-	if ((rc.isReady() && rc.canMove(dir))|| (enemyHQNearby && curLoc.distanceSquaredTo(enemyHqLoc) < curLoc.add(dir).distanceSquaredTo(enemyHqLoc))) {
-		rc.move(dir);
-		last = dir;
-		didMove = true;
-	} 
-	if(!didMove) {
-		Direction [] altDirs = alternateDirs.get(dir);
-		if(altDirs != null) {
-			for(Direction d: altDirs) {
-				if ((rc.isReady() && rc.canMove(dir))|| (enemyHQNearby && curLoc.distanceSquaredTo(enemyHqLoc) < curLoc.add(dir).distanceSquaredTo(enemyHqLoc))) {
-
-					rc.move(d);
-					last = d;
-					didMove = true;
-				} 
+			MapLocation curCandidate = enemyHQLocs[enemyHQIndex];
+			Direction desiredDir = curLoc.directionTo(curCandidate);
+			if(rc.canSenseLocation(curCandidate)) {
+				RobotInfo enemyRobot = rc.senseRobotAtLocation(curCandidate);
+				if(enemyRobot != null && enemyRobot.team == enemy && enemyRobot.type == RobotType.HQ) {
+					enemyHqLoc = curCandidate;
+					System.out.println("found enemy hq");
+				}
+				else {
+					System.out.println("im at hq Loc " + curCandidate + " but i didn't find hq");
+					enemyHQIndex = (enemyHQIndex + 1) % enemyHQLocs.length;
+					curCandidate = enemyHQLocs[enemyHQIndex];
+					desiredDir = curLoc.directionTo(curCandidate);
+				}
 			}
+			System.out.println("current Candidate: " + curCandidate);
+			System.out.println("desired Direction: " + desiredDir);
+			System.out.println("cooldown turns: " + rc.getCooldownTurns());
+			tryMove(desiredDir);
+			
 		}
-		else {
-			return tryMove(randomDirection(last));
+		if (!rc.isCurrentlyHoldingUnit() && rc.isReady()) {
+				// See if there are any enemy robots within striking range (distance 1 from lumberjack's radius)
+				if(rc.senseFlooding(curLoc)) {
+					Direction dirToBase = curLoc.directionTo(droneLoc);
+					tryMove(dirToBase);
+				}
+				RobotInfo[] pickupRobots = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, enemy);
+				
+				for(RobotInfo rob: pickupRobots) {
+					if (rob.type != RobotType.HQ && rc.canPickUpUnit(rob.ID)) {
+						// Pick up a first robot within range
+						rc.pickUpUnit(rob.ID);
+						//                    System.out.println("I picked up " + robots[0].getID() + "!");
+					}
+				}
+
+				RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, enemy);
+				RobotInfo approachToRobot = null;
+				int closestBot = Integer.MAX_VALUE;
+
+				for(RobotInfo r: nearbyRobots) {
+					int distToBot = curLoc.distanceSquaredTo(r.location);
+					if(distToBot < closestBot) {
+						approachToRobot = r;
+					}
+				}
+				if(approachToRobot != null) {
+					Direction dirToEnemy = curLoc.directionTo(approachToRobot.location);
+					System.out.println(dirToEnemy);
+					tryMove(dirToEnemy);
+				}
+			}
+		else if(rc.isReady()) {
+			System.out.println("currently carrying a unit");
+			if(waterLoc != null) {
+				System.out.println("waterLoc: " + waterLoc);
+			}
+			if(droneHoldingFor == DRONE_HOLD_LIMIT) {
+				if(enemyHQLocs == null) {
+					enemyHQCandidates(hqLoc);
+				}
+				waterLoc = enemyHQLocs[(int) (Math.random()*enemyHQLocs.length)];
+			}
+			if(waterLoc != null && !curLoc.equals(waterLoc) && !rc.senseFlooding(curLoc) && !curLoc.isAdjacentTo(waterLoc)) {
+				Direction dirToWater = curLoc.directionTo(waterLoc);
+				System.out.println("trying to move to whhere i can sense water");
+				tryMove(dirToWater);
+			}
+			
+
+			for(Direction dir: directions) {
+				if(rc.canSenseLocation(curLoc.add(dir))) {
+					if((rc.senseFlooding(curLoc.add(dir)) || (waterLoc != null && curLoc.isAdjacentTo(waterLoc) && rc.senseFlooding(curLoc.add(dir))))  && rc.canDropUnit(dir)) {
+						System.out.println("I am trying to drop the unit");
+						rc.dropUnit(dir);
+						droneHoldingFor = 0;
+						waterLoc = curLoc;
+					}
+				}
+			}
+			
+			if(waterLoc == null) {
+				searchFlooding();
+			}
+
+			if(waterLoc != null) {
+				Direction dirToWater = curLoc.directionTo(waterLoc);
+				tryMove(dirToWater);
+			}
+			tryMove(randomDirection(last));
+			droneHoldingFor += 1;
 		}
-	}
-	if(didMove) {
-		updateVisited();
+		
 	}
 
-	return didMove;
-	
-}
 
   static void searchFlooding() throws GameActionException {
 	if(rc.isReady()) {
@@ -1467,7 +1405,6 @@ static boolean moveOffensiveDrone(Direction dir) throws GameActionException{
 			System.out.println("rant");
 			int radius = (int) Math.sqrt(RobotType.DELIVERY_DRONE.sensorRadiusSquared);
 			MapLocation curLoc = rc.getLocation();
-			MapLocation curCandidate = enemyHQLocs[index];
 //			int mostFlooded = Integer.MAX_VALUE;
 			boolean hasMoved = false;
 			for(int i=-radius-1; i < radius+1; i++) {
@@ -1477,18 +1414,15 @@ static boolean moveOffensiveDrone(Direction dir) throws GameActionException{
 				for(int j=-radius-1; j < radius+1;j++) {
 					MapLocation loc = new MapLocation(curLoc.x+i, curLoc.y+j);
 					double curDist = Math.sqrt((curLoc.x - enemyHQLocs[index].x)^2 + (curLoc.y - enemyHQLocs[index].y)^2);
-					curDist = curLoc.distanceSquaredTo(curCandidate);
 					double newDist = Math.sqrt((loc.x - enemyHQLocs[index].x)^2 + (loc.y - enemyHQLocs[index].y)^2);
-					newDist = curLoc.distanceSquaredTo(loc);
-					Direction dir = curLoc.directionTo(loc);
 					System.out.println(newDist);
 					System.out.println(curDist);
-					if(rc.canSenseLocation(loc) && rc.canMove(dir) && newDist <= curDist && newDist > 4.9) {
+					if(rc.canSenseLocation(loc) && newDist <= curDist && newDist > 4.9) {
 						System.out.println(newDist);
 //						mostFlooded = rc.senseElevation(loc);
 						//System.out.println("Soup found at : " + loc +  "soupAmt: " + maxSoup);
 						//if (rc.senseElevation(curLoc) > rc.senseElevation(loc)) {
-							tryMove(dir);
+							tryMove(curLoc.directionTo(loc));
 							hasMoved = true;
 							break;
 						//}
