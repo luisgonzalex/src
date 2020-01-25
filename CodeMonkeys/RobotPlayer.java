@@ -465,6 +465,7 @@ public strictfp class RobotPlayer {
 				int[] mess = tx.getMessage();
 				if (mess[0] == teamSecret && mess[1] == 15) {
 					index = mess[2];
+					waiting = false;
 				}
     		}
 			if(enemyHQLocs != null && enemyHQLocs[index] != null) {
@@ -486,10 +487,11 @@ public strictfp class RobotPlayer {
 				} else {
 					Direction dirToEnemyHQ = loc.directionTo(enemyHQLocs[index]);
 	// add check for other locs
-					if ((rc.senseFlooding(loc.add(dirToEnemyHQ)) || Math.abs(rc.senseElevation(loc) - rc.senseElevation(loc.add(dirToEnemyHQ))) > 3))  {
+					if ((rc.senseFlooding(loc.add(dirToEnemyHQ)) || Math.abs(rc.senseElevation(loc) - rc.senseElevation(loc.add(dirToEnemyHQ))) > 3))  {	
 						for (Direction dir : directions) {	
 							if (rc.canBuildRobot(RobotType.FULFILLMENT_CENTER, dir) && !waiting) {
 								if (rc.getTeamSoup() > RobotType.FULFILLMENT_CENTER.cost) {
+									System.out.println("run");
 									rc.buildRobot(RobotType.FULFILLMENT_CENTER, dir);
 									waiting = true;
 									int[] message = new int[7];
@@ -503,12 +505,10 @@ public strictfp class RobotPlayer {
 								}
 							} 
 						}
-					} else {
-						waiting = false;
-					}
+					} 
 					if (!waiting) {
 						tryMove(dirToEnemyHQ);
-					}
+					} 
 				}
 			}
     	}
@@ -952,14 +952,14 @@ public strictfp class RobotPlayer {
 					if (rc.getTeamSoup() > RobotType.DELIVERY_DRONE.cost) {
 						if (tryBuild(RobotType.DELIVERY_DRONE, dir)) {
 							droneCount += 1;
-						}
-						int[] message = new int[7];
-						message[0] = teamSecret;
-						message[1] = 10;
-						message[2] = index;
-						message[3] = lsID;
-						if (rc.canSubmitTransaction(message, 1)) {
-							rc.submitTransaction(message, 1);
+							int[] message = new int[7];
+							message[0] = teamSecret;
+							message[1] = 10;
+							message[2] = index;
+							message[3] = lsID;
+							if (rc.canSubmitTransaction(message, 1)) {
+								rc.submitTransaction(message, 1);
+							}
 						}
 					}
 				}
@@ -1173,13 +1173,6 @@ public strictfp class RobotPlayer {
 		
 		if (offensive) {
 			System.out.println("im offensive drone!");
-			int[] message = new int[7];
-			message[0] = teamSecret;
-			message[1] = 15;
-			message[2] = index;
-			if (rc.canSubmitTransaction(message, 1)) {
-				rc.submitTransaction(message, 1);
-			}
 			if (rc.canSenseLocation(enemyHQLocs[index])) {
 				RobotInfo check = rc.senseRobotAtLocation(enemyHQLocs[index]);
 				if (check == null) {
@@ -1192,11 +1185,29 @@ public strictfp class RobotPlayer {
 				if (rc.canPickUpUnit(lsID)) {
 					rc.pickUpUnit(lsID);
 				} else {
+					for (RobotInfo rob : rc.senseNearbyRobots()) {
+						if (rob.ID == lsID) {
+							loc = rob.getLocation();
+						}
+					}
 					tryMove(rc.getLocation().directionTo(loc));
 				}
 			}
 			if (rc.isCurrentlyHoldingUnit()) {
-				if (rc.getLocation().isAdjacentTo(enemyHQLocs[index])) {
+				int[] message = new int[7];
+				message[0] = teamSecret;
+				message[1] = 15;
+				message[2] = index;
+				if (rc.canSubmitTransaction(message, 1)) {
+					rc.submitTransaction(message, 1);
+				}
+				if (rc.canSenseLocation(enemyHQLocs[index])) {
+					if (rc.senseRobotAtLocation(enemyHQLocs[index]).type == RobotType.HQ) {
+						if (rc.senseElevation(enemyHQLocs[index]) < rc.senseElevation(rc.getLocation())) {
+							searchLowerGround();
+						}
+					}
+				} else if (rc.getLocation().isAdjacentTo(enemyHQLocs[index])) {
 					for (Direction dir : directions) {
 						if (rc.canDropUnit(dir)) {
 							rc.dropUnit(dir);
@@ -1383,7 +1394,39 @@ public strictfp class RobotPlayer {
 			}
 		}
 	}
-}	
+}
+  
+  static void searchLowerGround() throws GameActionException {
+		if(rc.isReady()) {
+			System.out.println("rant");
+			int radius = (int) Math.sqrt(RobotType.DELIVERY_DRONE.sensorRadiusSquared);
+			MapLocation curLoc = rc.getLocation();
+//			int mostFlooded = Integer.MAX_VALUE;
+			boolean hasMoved = false;
+			for(int i=-radius-1; i < radius+1; i++) {
+				if(hasMoved) {
+					break;
+				}
+				for(int j=-radius-1; j < radius+1;j++) {
+					MapLocation loc = new MapLocation(curLoc.x+i, curLoc.y+j);
+					double curDist = Math.sqrt((curLoc.x - enemyHQLocs[index].x)^2 + (curLoc.y - enemyHQLocs[index].y)^2);
+					double newDist = Math.sqrt((loc.x - enemyHQLocs[index].x)^2 + (loc.y - enemyHQLocs[index].y)^2);
+					System.out.println(newDist);
+					System.out.println(curDist);
+					if(rc.canSenseLocation(loc) && newDist <= curDist && newDist > 4.9) {
+						System.out.println(newDist);
+//						mostFlooded = rc.senseElevation(loc);
+						//System.out.println("Soup found at : " + loc +  "soupAmt: " + maxSoup);
+						//if (rc.senseElevation(curLoc) > rc.senseElevation(loc)) {
+							tryMove(curLoc.directionTo(loc));
+							hasMoved = true;
+							break;
+						//}
+					}
+				}
+			}
+		}
+	}
 	
 	static void runNetGun() throws GameActionException {
 		if(rc.isReady()) {
