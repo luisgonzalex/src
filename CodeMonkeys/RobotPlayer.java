@@ -269,7 +269,7 @@ public strictfp class RobotPlayer {
 	            }
 	        }
 		}
-		if (rc.getRoundNum() >= 240 && !canBuild) {
+		if (rc.getRoundNum() >= 240 && !canBuild && offensive) {
     		for (Direction dir : directions) {
     			if (rc.canBuildRobot(RobotType.MINER, dir)) {
     				rc.buildRobot(RobotType.MINER, dir);
