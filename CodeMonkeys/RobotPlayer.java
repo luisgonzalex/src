@@ -141,6 +141,9 @@ public strictfp class RobotPlayer {
 		// and to get information on its current status.
 		RobotPlayer.rc = rc;
 		turnCount = 0;
+		if(turnCount == 0) {
+			visited[0] = rc.getLocation();
+		}
 
 		oppositeDirection.put(Direction.NORTH, Direction.SOUTH);
 		oppositeDirection.put(Direction.NORTHEAST, Direction.SOUTHWEST);
@@ -729,7 +732,6 @@ public strictfp class RobotPlayer {
     			}
     			else if(mess[0] == teamSecret && mess[1] == LS_BUILD_WALL) {
     				abandonHQ = true;
-    				lastSoupMined = null;
     			}
     		}
     		if(abandonHQ) {
@@ -755,30 +757,16 @@ public strictfp class RobotPlayer {
 //              System.out.println("I mined soup! " + rc.getSoupCarrying());
 	            }
 	        }
-	        if(abandonHQ && rc.canSenseLocation(hqLoc) && rc.senseRobotAtLocation(hqLoc).type == RobotType.HQ && rc.getLocation().distanceSquaredTo(hqLoc) < 25 ) {
+	        if(abandonHQ && rc.canSenseLocation(hqLoc) && rc.senseRobotAtLocation(hqLoc).type == RobotType.HQ && rc.getLocation().distanceSquaredTo(hqLoc) < 9 ) {
 	        	tryMove(oppositeDirection.get(rc.getLocation().directionTo(hqLoc)));
 	        }
 	        // go drop off soup at hq
-	        if (rc.getSoupCarrying() == rc.getType().soupLimit || (abandonHQ && rc.getLocation().distanceSquaredTo(hqLoc) < 16) ) {
+	        if (rc.getSoupCarrying() == rc.getType().soupLimit || abandonHQ) {
 //        	System.out.println("at the soup limit: " + rc.getSoupCarrying());
 	        	// time to go back to HQ
 	        	counter += 1;
-	        	if (counter >= 10) {
-	        		for (Direction dir : directions) {
-	        			if (rc.canBuildRobot(RobotType.REFINERY, dir)) {
-	        				rc.buildRobot(RobotType.REFINERY, dir);
-	        			}
-	        		}
-	        	}
 	        	int distToHQ = rc.getLocation().distanceSquaredTo(hqLoc);
-	        	if(distToHQ <= REFINERY_DIST_LIMIT && !abandonHQ) {
-		        	Direction dirToHQ = loc.directionTo(hqLoc);
-		        	if(tryMove(dirToHQ)) {
-//	        		System.out.println("moved towards HQ");
-//		        	System.out.println("moved to: " + rc.getLocation());
-		        	}
-	        	}
-	        	else {
+	        	if (counter >= 10 || abandonHQ || distToHQ > REFINERY_DIST_LIMIT) {
 	        		RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, rc.getTeam());
 	        		boolean refineryBuilt = false;
 	        		for(RobotInfo rob: nearbyRobots) {
@@ -795,6 +783,18 @@ public strictfp class RobotPlayer {
 	        				}
 	        			}
 	        		}
+//	        		for (Direction dir : directions) {
+//	        			if (rc.canBuildRobot(RobotType.REFINERY, dir)) {
+//	        				rc.buildRobot(RobotType.REFINERY, dir);
+//	        			}
+//	        		}
+	        	}
+	        	else {
+	        		Direction dirToHQ = loc.directionTo(hqLoc);
+		        	if(tryMove(dirToHQ)) {
+//	        		System.out.println("moved towards HQ");
+//		        	System.out.println("moved to: " + rc.getLocation());
+		        	}
 	        	}
 	        }
 	    	// move towards last soup mined
@@ -1403,7 +1403,7 @@ public strictfp class RobotPlayer {
 						for (Direction dir : directions) {
 //							double elevationDiff = Math.abs(rc.senseElevation(enemyHQLocs[index]) - rc.senseElevation(rc.getLocation().add(dir)));
 //							System.out.println("elevation diff: " + elevationDiff);
-							if (rc.canDropUnit(dir) && rc.getLocation().add(dir).distanceSquaredTo(enemyHQLocs[index]) > RobotType.NET_GUN.sensorRadiusSquared) {
+							if (rc.canDropUnit(dir) && !rc.senseFlooding(rc.getLocation().add(dir)) && rc.getLocation().add(dir).distanceSquaredTo(enemyHQLocs[index]) > RobotType.NET_GUN.sensorRadiusSquared) {
 								rc.dropUnit(dir);
 								offensive = false;
 							}
@@ -1684,7 +1684,7 @@ public strictfp class RobotPlayer {
 					System.out.println(newDist);
 					System.out.println(curDist);
 					
-					if(rc.canSenseLocation(loc) && rc.canMove(dir)) {
+					if(rc.canSenseLocation(loc) && rc.canMove(dir) && !rc.senseFlooding(loc)) {
 						System.out.println(newDist);
 						boolean isLower = rc.senseElevation(loc) < lowestElevation;
 						boolean isSafe = newDist > RobotType.NET_GUN.sensorRadiusSquared;
