@@ -472,9 +472,7 @@ public strictfp class RobotPlayer {
     }
 
     static void runMiner() throws GameActionException {
-    	System.out.println(offensive);
-    	System.out.println(buildingMiner);
-    	System.out.println(build);
+    	System.out.println(isStuck());
     	if (hqLoc == null && !abandonHQ) {
     		// search surroundings for HQ
     		RobotInfo[] robots = rc.senseNearbyRobots();
@@ -1234,6 +1232,13 @@ public strictfp class RobotPlayer {
 								behind = Direction.EAST;
 							} else if (dir == Direction.EAST) {
 								behind = Direction.WEST;
+							}
+							if (!rc.canDigDirt(behind) && rc.senseRobotAtLocation(loc.add(behind)).type != RobotType.LANDSCAPER && rc.senseRobotAtLocation(loc.add(behind)).type != RobotType.MINER && rc.senseRobotAtLocation(loc.add(behind)).type != RobotType.DELIVERY_DRONE) {
+								if (behind == Direction.NORTH || behind == Direction.EAST) {
+									behind = Direction.NORTHEAST;
+								} else if (behind == Direction.SOUTH || behind == Direction.WEST) {
+									behind = Direction.NORTHWEST;
+								}
 							}
 						}
 						if (rc.canDigDirt(behind) && canBuild) {
