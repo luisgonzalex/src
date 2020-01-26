@@ -755,7 +755,7 @@ public strictfp class RobotPlayer {
 //              System.out.println("I mined soup! " + rc.getSoupCarrying());
 	            }
 	        }
-	        if(abandonHQ && rc.canSenseLocation(hqLoc) && rc.senseRobotAtLocation(hqLoc).type == RobotType.HQ && rc.getLocation().distanceSquaredTo(hqLoc) < 9 ) {
+	        if(abandonHQ && rc.canSenseLocation(hqLoc) && rc.senseRobotAtLocation(hqLoc).type == RobotType.HQ && rc.getLocation().distanceSquaredTo(hqLoc) < 16 ) {
 	        	tryMove(oppositeDirection.get(rc.getLocation().directionTo(hqLoc)));
 	        }
 	        // go drop off soup at hq
@@ -1116,7 +1116,7 @@ public strictfp class RobotPlayer {
 				}
 			}
 			for (Direction dir : directions) {
-				if (droneCount < 1 && rc.getTeamSoup() > RobotType.DELIVERY_DRONE.cost || droneAttack && (rc.getTeamSoup() > 1200 || firstWave)) {
+				if (droneCount < 1 && rc.getTeamSoup() > RobotType.DELIVERY_DRONE.cost || (droneAttack && (rc.getTeamSoup() > 1200 || firstWave))) {
 					if (tryBuild(RobotType.DELIVERY_DRONE, dir)) {
 						if(droneCount == 0) {
 							int[] message = new int[7];
