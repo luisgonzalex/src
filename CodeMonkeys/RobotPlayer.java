@@ -35,7 +35,7 @@ public strictfp class RobotPlayer {
 
  
     static int ELEVATION_LIMIT = 25;
-    static int MINER_LIMIT = 3;
+    static int MINER_LIMIT = 4;
     static int VAPORATOR_LIMIT = 2;
     static int DESIGN_LIMIT = 2;  
     static int LANDSCAPER_LIMIT = 6;
@@ -82,13 +82,16 @@ public strictfp class RobotPlayer {
     static boolean replaceDirt = true;
     static boolean done = false;
     static boolean offensive = false;
+    static boolean defensive = false;
     static int index = 0;
     static boolean droneAttack = false;
     static boolean waiting = false;
     static boolean abandonHQ = false;
+    static boolean build = false;
+    static int counter = 0;
     
     
-    static int recencyThreshold = 7;
+    static int recencyThreshold = 8;
     static MapLocation[] visited = new MapLocation[recencyThreshold];
     
     static MapLocation loc;
@@ -222,15 +225,59 @@ public strictfp class RobotPlayer {
 
     static void runHQ() throws GameActionException {
     	hqElevation = rc.senseElevation(rc.getLocation());
+    	for (RobotInfo rob : rc.senseNearbyRobots()) {
+    		if (rob.type == RobotType.DELIVERY_DRONE && rob.getTeam() != rc.getTeam()) {
+    			if (rc.canShootUnit(rob.ID)) {
+    				rc.shootUnit(rob.ID);
+    			}
+    		}
+    	}
+    	int lsCount = 0;
+    	for (RobotInfo rob : rc.senseNearbyRobots(2)) {
+    		if (rob.type == RobotType.LANDSCAPER) {
+    			lsCount += 1;
+    		}
+    		if (lsCount == 8) {
+    			int[] mess = new int[7];
+    			mess[0] = teamSecret;
+    			mess[1] = 23;
+    			if (rc.canSubmitTransaction(mess, 1)) {
+    				rc.submitTransaction(mess, 1);
+    			}
+    		}
+    	}
     	enemyHQCandidates(rc.getLocation());
     	for(MapLocation loc: enemyHQLocs) {
 //    	System.out.println("ememy HQ location" + loc);
     	}
     	if(minerCount < MINER_LIMIT) {
-	        for (Direction dir : directions)
+	        for (Direction dir : directions) {
 	            if(tryBuild(RobotType.MINER, dir)) {
 	            	minerCount += 1;
+	            	if (minerCount == 2 && offensive) {
+	            		int[] mess = new int[7];
+		    	    	mess[0] = teamSecret;
+		    	    	mess[1] = 20;
+		            	if (rc.canSubmitTransaction(mess, 1)) {
+		            		rc.submitTransaction(mess, 1);
+		            	}
+	            	}
 	            }
+	        }
+    	}
+    	if (rc.getRoundNum() >= 240 && !canBuild) {
+    		for (Direction dir : directions) {
+    			if (rc.canBuildRobot(RobotType.MINER, dir)) {
+    				rc.buildRobot(RobotType.MINER, dir);
+    				canBuild = true;
+    				int[] mess = new int[7];
+    				mess[0] = teamSecret;
+    				mess[1] = 27;
+    				if (rc.canSubmitTransaction(mess, 1)) {
+	            		rc.submitTransaction(mess, 1);
+	            	}
+    			}
+    		}
     	}
     	if (rc.getRoundNum() == 1) {
     		if (rc.onTheMap(rc.getLocation().add(Direction.NORTH).add(Direction.NORTH)) && rc.onTheMap(rc.getLocation().add(Direction.NORTHWEST).add(Direction.NORTHWEST)) && rc.onTheMap(rc.getLocation().add(Direction.NORTHEAST).add(Direction.NORTHEAST)) && rc.onTheMap(rc.getLocation().add(Direction.SOUTH).add(Direction.SOUTH)) && rc.onTheMap(rc.getLocation().add(Direction.SOUTHWEST).add(Direction.WEST)) && rc.onTheMap(rc.getLocation().add(Direction.SOUTHEAST).add(Direction.EAST)) && rc.onTheMap(rc.getLocation().add(Direction.WEST).add(Direction.WEST).add(Direction.WEST))) {
@@ -297,6 +344,7 @@ public strictfp class RobotPlayer {
 	        				if (rc.canSubmitTransaction(offense, 1)) {
 	    	            		rc.submitTransaction(offense, 1);
 	    	            	}
+	        				offensive = true;
 	        				
 	        				int[] hqCoords = new int[7];
 			    	    	hqCoords[0] = teamSecret;
@@ -314,6 +362,7 @@ public strictfp class RobotPlayer {
         				if (rc.canSubmitTransaction(offense, 1)) {
     	            		rc.submitTransaction(offense, 1);
     	            	}
+        				offensive = true;
         				
         				int[] hqCoords = new int[7];
 		    	    	hqCoords[0] = teamSecret;
@@ -331,6 +380,7 @@ public strictfp class RobotPlayer {
     				if (rc.canSubmitTransaction(offense, 1)) {
 	            		rc.submitTransaction(offense, 1);
 	            	}
+    				offensive = true;
     				
     				int[] hqCoords = new int[7];
 	    	    	hqCoords[0] = teamSecret;
@@ -348,6 +398,7 @@ public strictfp class RobotPlayer {
     			if (rc.canSubmitTransaction(offense, 1)) {
             		rc.submitTransaction(offense, 1);
             	}
+    			offensive = true;
     			
     			int[] hqCoords = new int[7];
     	    	hqCoords[0] = teamSecret;
@@ -426,6 +477,7 @@ public strictfp class RobotPlayer {
     static void runMiner() throws GameActionException {
     	System.out.println(offensive);
     	System.out.println(buildingMiner);
+    	System.out.println(build);
     	if (hqLoc == null && !abandonHQ) {
     		// search surroundings for HQ
     		RobotInfo[] robots = rc.senseNearbyRobots();
@@ -453,10 +505,43 @@ public strictfp class RobotPlayer {
     				buildingMiner = true;
     			}
     		}
+    	} else if (turnCount == 1) {
+    		for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+    			int[] mess = tx.getMessage();
+    			if (mess[0] == teamSecret && mess[1] == 27) {
+    				build = true;
+    			}
+    		}
     	}
 //    	if (rc.getRoundNum() == 3 && !offensive) { 
 //    		buildingMiner = true;
 //    	}
+    	if (rc.getRoundNum() >= 250 && build) {
+    		if (rc.canSenseLocation(hqLoc)) {
+    			Direction dir = loc.directionTo(hqLoc);
+				if (dir == Direction.SOUTH || dir == Direction.SOUTHEAST || dir == Direction.SOUTHWEST) {
+					behind = Direction.NORTH;
+				} else if (dir == Direction.NORTH || dir == Direction.NORTHEAST || dir == Direction.NORTHWEST) {
+					behind = Direction.SOUTH;
+				} else if (dir == Direction.WEST) {
+					behind = Direction.EAST;
+				} else if (dir == Direction.EAST) {
+					behind = Direction.WEST;
+				}
+	    		if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, behind)) {
+	    			rc.buildRobot(RobotType.DESIGN_SCHOOL, behind);
+	    			build = false;
+	    			int[] message = new int[7];
+    		       	message[0] = teamSecret;
+    		       	message[1] = 21;
+    		       	if (rc.canSubmitTransaction(message, 1)) {
+    		       		rc.submitTransaction(message, 1);
+    	        	}
+    			}
+    		} else {
+    			tryMove(loc.directionTo(hqLoc));
+    		}
+    	}
     	if (offensive) {
     		if (rc.getRoundNum() == 3) {
     			enemyHQCandidates(hqLoc);
@@ -501,6 +586,12 @@ public strictfp class RobotPlayer {
 			    		        	message[3] = rc.getID();
 			    		        	if (rc.canSubmitTransaction(message, 1)) {
 			    		        		rc.submitTransaction(message, 1);
+			    		        	}
+			    		        	int[] mess = new int[7];
+			    		        	mess[0] = teamSecret;
+			    		        	mess[1] = 6;
+			    		        	if (rc.canSubmitTransaction(mess, 1)) {
+			    		        		rc.submitTransaction(mess, 1);
 			    		        	}
 								}
 							} 
@@ -644,11 +735,11 @@ public strictfp class RobotPlayer {
     		if(abandonHQ) {
     			System.out.println("I should be abandoning the enemy HQ");
     		}
-    		if (done) {
-    			enemyHQCandidates(hqLoc);
-    			Direction dirToEnemyHQ = rc.getLocation().directionTo(enemyHQLocs[0]);
-    			tryMove(dirToEnemyHQ);
-    		}
+//    		if (done) {
+//    			enemyHQCandidates(hqLoc);
+//    			Direction dirToEnemyHQ = rc.getLocation().directionTo(enemyHQLocs[0]);
+//    			tryMove(dirToEnemyHQ);
+//    		}
 //    		System.out.println(Clock.getBytecodesLeft());
     		loc = rc.getLocation();
 	    	// tries to refine soup all around it
@@ -671,6 +762,14 @@ public strictfp class RobotPlayer {
 	        if (rc.getSoupCarrying() == rc.getType().soupLimit || (abandonHQ && rc.getLocation().distanceSquaredTo(hqLoc) < 16) ) {
 //        	System.out.println("at the soup limit: " + rc.getSoupCarrying());
 	        	// time to go back to HQ
+	        	counter += 1;
+	        	if (counter >= 10) {
+	        		for (Direction dir : directions) {
+	        			if (rc.canBuildRobot(RobotType.REFINERY, dir)) {
+	        				rc.buildRobot(RobotType.REFINERY, dir);
+	        			}
+	        		}
+	        	}
 	        	int distToHQ = rc.getLocation().distanceSquaredTo(hqLoc);
 	        	if(distToHQ <= REFINERY_DIST_LIMIT && !abandonHQ) {
 		        	Direction dirToHQ = loc.directionTo(hqLoc);
@@ -700,6 +799,7 @@ public strictfp class RobotPlayer {
 	        }
 	    	// move towards last soup mined
 	    	if (lastSoupMined != null && rc.getSoupCarrying() == 0) {
+	    		counter = 0;
 	    		Direction dirToSoup = loc.directionTo(lastSoupMined);
 	    		if (dirToSoup == Direction.CENTER) {
 //	    			System.out.println("ran");
@@ -889,10 +989,32 @@ public strictfp class RobotPlayer {
     				offensive = true;
     			}
     		}
+    		if (offensive) {
+    			for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+    				int[] mes = tx.getMessage();
+    				if (mes[0] == teamSecret && mes[1] == 21) {
+    					defensive = true;
+    				}
+    			}
+    		}
     	}
     	if (offensive) {
-    		for (Direction dir : directions) {
-    			tryBuild(RobotType.LANDSCAPER, dir);
+    		if (defensive && landscaperCount < 8) {
+    			for (Direction dir : directions) {
+    				if (tryBuild(RobotType.LANDSCAPER, dir)) {
+    					landscaperCount += 1;
+    					int[] mess = new int[7];
+    					mess[0] = teamSecret;
+    					mess[1] = 21;
+    					if(rc.canSubmitTransaction(mess, 1)) {
+    						rc.submitTransaction(mess, 1);
+    					}
+    				}
+    			}
+    		} else if (!defensive){
+	    		for (Direction dir : directions) {
+	    			tryBuild(RobotType.LANDSCAPER, dir);
+	    		}
     		}
     	} else {
 	    	for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
@@ -1035,8 +1157,20 @@ public strictfp class RobotPlayer {
 							enemyHqLoc = r.getLocation();
 						}
 					}
+				} else if (mess[0] == teamSecret && mess[1] == 1 && hqLoc == null) {
+					hqLoc = new MapLocation(mess[6],mess[4]);
 				}
 			}
+			
+			if (offensive) {
+    			for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+    				int[] mes = tx.getMessage();
+    				if (mes[0] == teamSecret && mes[1] == 21) {
+    					defensive = true;
+    				}
+    			}
+    		}
+			
 			if (!offensive) {
 				for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
 					int[] mess = tx.getMessage();
@@ -1073,21 +1207,56 @@ public strictfp class RobotPlayer {
 				}
 			}
 		}
+		loc = rc.getLocation();
 		if (offensive) {
-			if (rc.getLocation().isAdjacentTo(enemyHqLoc)) {
-				if (rc.getDirtCarrying() < 1) {
-					for (Direction dir : directions) {
-						if (rc.canDigDirt(dir) && rc.senseRobotAtLocation(rc.getLocation().add(dir)) == null) {
-							rc.digDirt(dir);
+			if (defensive) {
+				for (Transaction tx : rc.getBlock(rc.getRoundNum() - 1)) {
+					int[] mess = tx.getMessage();
+					if (mess[0] == teamSecret && mess[1] == 23) {
+						canBuild = true;
+					}
+				}
+				if (loc.isAdjacentTo(hqLoc)) {
+					if (rc.getDirtCarrying() == 1 && canBuild) {
+						if (rc.canDepositDirt(Direction.CENTER)) {
+							rc.depositDirt(Direction.CENTER);
+						}
+					} else {
+						if (behind == null) {
+							Direction dir = loc.directionTo(hqLoc);
+							if (dir == Direction.SOUTH || dir == Direction.SOUTHEAST || dir == Direction.SOUTHWEST) {
+								behind = Direction.NORTH;
+							} else if (dir == Direction.NORTH || dir == Direction.NORTHEAST || dir == Direction.NORTHWEST) {
+								behind = Direction.SOUTH;
+							} else if (dir == Direction.WEST) {
+								behind = Direction.EAST;
+							} else if (dir == Direction.EAST) {
+								behind = Direction.WEST;
+							}
+						}
+						if (rc.canDigDirt(behind) && canBuild) {
+							rc.digDirt(behind);
 						}
 					}
 				} else {
-					if (rc.canDepositDirt(rc.getLocation().directionTo(enemyHqLoc))) {
-						rc.depositDirt(rc.getLocation().directionTo(enemyHqLoc));
-					}
+					tryMove(loc.directionTo(hqLoc));
 				}
 			} else {
-				tryMove(rc.getLocation().directionTo(enemyHqLoc));
+				if (rc.getLocation().isAdjacentTo(enemyHqLoc) && !defensive) {
+					if (rc.getDirtCarrying() < 1) {
+						for (Direction dir : directions) {
+							if (rc.canDigDirt(dir) && rc.senseRobotAtLocation(rc.getLocation().add(dir)) == null) {
+								rc.digDirt(dir);
+							}
+						}
+					} else {
+						if (rc.canDepositDirt(rc.getLocation().directionTo(enemyHqLoc))) {
+							rc.depositDirt(rc.getLocation().directionTo(enemyHqLoc));
+						}
+					}
+				} else {
+					tryMove(rc.getLocation().directionTo(enemyHqLoc));
+				}
 			}
 		} else {
 			if (stop || !hasStopped) {
@@ -1540,10 +1709,15 @@ static boolean moveOffensiveDrone(Direction dir) throws GameActionException{
 	}
 
 	static boolean tryMove() throws GameActionException {
-		for (Direction dir : directions)
-			if (tryMove(dir))
-				return true;
+		Direction randDir = directions[(int) (Math.random() * directions.length)];
+		MapLocation curLoc = rc.getLocation();
+		if(rc.isReady() && rc.canMove(randDir) && !rc.senseFlooding(curLoc.add(randDir))) {
+			rc.move(randDir);
+			last = randDir;
+			return true;
+		}
 		return false;
+		
 		// MapLocation loc = rc.getLocation();
 		// if (loc.x < 10 && loc.x < loc.y)
 		//     return tryMove(Direction.EAST);
@@ -1619,7 +1793,7 @@ static boolean moveOffensiveDrone(Direction dir) throws GameActionException{
 			Direction [] altDirs = alternateDirs.get(dir);
 			if(altDirs != null) {
 				for(Direction d: altDirs) {
-					if (rc.isReady() && rc.canMove(d) && (!rc.senseFlooding(curLoc.add(d)) && !hasVisited(curLoc, dir) || rc.getType() == RobotType.DELIVERY_DRONE)) {
+					if (rc.isReady() && rc.canMove(d) && (!rc.senseFlooding(curLoc.add(d)) && !hasVisited(curLoc, d) || rc.getType() == RobotType.DELIVERY_DRONE)) {
 						rc.move(d);
 						last = d;
 						didMove = true;
@@ -1630,13 +1804,16 @@ static boolean moveOffensiveDrone(Direction dir) throws GameActionException{
 				return tryMove(randomDirection(last));
 			}
 		}
+		System.out.println(isStuck());
+		if(!didMove && isStuck()) {
+			while(true) {
+				if(tryMove()){
+					break;
+				};
+			}
+		}
 		if(didMove) {
 			updateVisited();
-		}
-		if(didMove && rc.getType() == RobotType.MINER && isStuck() && rc.getRoundNum() > 200) {
-			System.out.println("I have disintegrated");
-			abandonHQ = true;
-//			tryMove(randomDirection(last));
 		}
 		return didMove;
 	}
