@@ -569,7 +569,10 @@ public strictfp class RobotPlayer {
 				} else {
 					Direction dirToEnemyHQ = loc.directionTo(enemyHQLocs[index]);
 					// add check for other locs
-					if (!hasVisited(loc, dirToEnemyHQ) && (rc.senseFlooding(loc.add(dirToEnemyHQ)) || Math.abs(rc.senseElevation(loc) - rc.senseElevation(loc.add(dirToEnemyHQ))) > 3))  {	
+					if(!waiting && tryMoveMiner(dirToEnemyHQ)) {
+						
+					}
+					else if (!hasVisited(loc, dirToEnemyHQ) && (rc.senseFlooding(loc.add(dirToEnemyHQ)) || Math.abs(rc.senseElevation(loc) - rc.senseElevation(loc.add(dirToEnemyHQ))) > 3))  {	
 						for (Direction dir : directions) {	
 							if (rc.canBuildRobot(RobotType.FULFILLMENT_CENTER, dir) && !waiting) {
 								if (rc.getTeamSoup() > RobotType.FULFILLMENT_CENTER.cost) {
@@ -594,9 +597,9 @@ public strictfp class RobotPlayer {
 							} 
 						}
 					} 
-					if (!waiting) {
-						tryMove(dirToEnemyHQ);
-					} 
+//					if (!waiting) {
+//						tryMove(dirToEnemyHQ);
+//					} 
 				}
 			}
     	}
@@ -1750,15 +1753,23 @@ public strictfp class RobotPlayer {
 		}
 		return false;
 		
-		// MapLocation loc = rc.getLocation();
-		// if (loc.x < 10 && loc.x < loc.y)
-		//     return tryMove(Direction.EAST);
-		// else if (loc.x < 10)
-		//     return tryMove(Direction.SOUTH);
-		// else if (loc.x > loc.y)
-		//     return tryMove(Direction.WEST);
-		// else
-		//     return tryMove(Direction.NORTH);
+	}
+	
+	static boolean tryMoveMiner(Direction dir) throws GameActionException{
+		MapLocation curLoc = rc.getLocation();
+		if(rc.isReady() && rc.canMove(dir) && !rc.senseFlooding(curLoc.add(dir))) {
+			rc.move(dir);
+			return true;
+		} else {
+			if (rc.isReady() && rc.canMove(alternateDirs.get(dir)[0]) && !rc.senseFlooding(curLoc.add(alternateDirs.get(dir)[0]))) {
+				rc.move(alternateDirs.get(dir)[0]);
+				return true;
+			} else if (rc.isReady() && rc.canMove(alternateDirs.get(dir)[1]) && !rc.senseFlooding(curLoc.add(alternateDirs.get(dir)[1]))) {
+				rc.move(alternateDirs.get(dir)[1]);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	//	/**
